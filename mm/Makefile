@@ -135,3 +135,5 @@ obj-$(CONFIG_IO_MAPPING) += io-mapping.o
 obj-$(CONFIG_HAVE_BOOTMEM_INFO_NODE) += bootmem_info.o
 obj-$(CONFIG_GENERIC_IOREMAP) += ioremap.o
 obj-$(CONFIG_PAGE_BOOST_RECORDING) += io_record.o
+
+CFLAGS_kmemleak.o += -DCONFIG_DEBUG_FS
