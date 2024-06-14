@@ -9,7 +9,7 @@ ARGS="$*"
 DEVICE_MODEL="$1"
 
 JOBS=$(nproc --all)
-MAKE_PARAMS="-j$JOBS -C $DIR ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 CLANG_TRIPLE=aarch64-linux-gnu CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-"
+MAKE_PARAMS="-j$JOBS -C $DIR ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 CLANG_TRIPLE=llvm- CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-"
 
 devicecheck() {
     if [ "$DEVICE_MODEL" == "A546E" ]; then
