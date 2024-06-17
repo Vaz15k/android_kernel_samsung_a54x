@@ -1613,6 +1613,14 @@ static void mmc_sd_detect(struct mmc_host *host)
 	 */
 	err = _mmc_detect_card_removed(host);
 
+#ifdef CONFIG_SEC_FACTORY
+	/*
+	 * In case of factory binary, Turn off sdcard power to prevent OCP issue.
+	 */
+	if (err && host->ops->get_cd && host->ops->get_cd(host) == 0)
+		mmc_power_off(host);
+#endif
+
 	mmc_put_card(host->card, NULL);
 
 	if (err) {
@@ -1884,6 +1892,8 @@ err:
 	mmc_detach_bus(host);
 
 	pr_err("%s: error %d whilst initialising SD card\n",
+		mmc_hostname(host), err);
+	ST_LOG("%s: error %d whilst initialising SD card\n",
 		mmc_hostname(host), err);
 
 	trace_android_vh_mmc_attach_sd(host, ocr, err);

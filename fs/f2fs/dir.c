@@ -10,6 +10,7 @@
 #include <linux/f2fs_fs.h>
 #include <linux/sched/signal.h>
 #include <linux/unicode.h>
+#include <linux/iversion.h>
 #include "f2fs.h"
 #include "node.h"
 #include "acl.h"
@@ -806,8 +807,15 @@ int f2fs_add_dentry(struct inode *dir, const struct f2fs_filename *fname,
 {
 	int err = -EAGAIN;
 
-	if (f2fs_has_inline_dentry(dir))
+	if (f2fs_has_inline_dentry(dir)) {
+		/*
+		 * Should get i_xattr_sem to keep the lock order:
+		 * i_xattr_sem -> inode_page lock used by f2fs_setxattr.
+		 */
+		f2fs_down_read(&F2FS_I(dir)->i_xattr_sem);
 		err = f2fs_add_inline_entry(dir, fname, inode, ino, mode);
+		f2fs_up_read(&F2FS_I(dir)->i_xattr_sem);
+	}
 	if (err == -EAGAIN)
 		err = f2fs_add_regular_entry(dir, fname, inode, ino, mode);
 
@@ -1103,6 +1111,9 @@ static int f2fs_readdir(struct file *file, struct dir_context *ctx)
 		goto out_free;
 	}
 
+	if (!inode_eq_iversion(inode, file->f_version))
+		file->f_version = inode_query_iversion(inode);
+
 	for (; n < npages; n++, ctx->pos = n * NR_DENTRY_IN_BLOCK) {
 
 		/* allow readdir() to be interrupted */
@@ -1135,6 +1146,14 @@ static int f2fs_readdir(struct file *file, struct dir_context *ctx)
 		err = f2fs_fill_dentries(ctx, &d,
 				n * NR_DENTRY_IN_BLOCK, &fstr);
 		if (err) {
+			struct f2fs_sb_info *sbi = F2FS_P_SB(dentry_page);
+
+			if (err == -EINVAL) {
+				print_block_data(sbi->sb, n,
+					page_address(dentry_page), 0, F2FS_BLKSIZE);
+				f2fs_bug_on(sbi, 1);
+			}
+
 			f2fs_put_page(dentry_page, 0);
 			break;
 		}

@@ -186,7 +186,7 @@ static bool backing_data_changed(struct fuse_inode *fi, struct dentry *entry,
 	int err;
 	bool ret = true;
 
-	if (!entry) {
+	if (!entry || !fi->backing_inode) {
 		ret = false;
 		goto put_backing_file;
 	}
@@ -1870,7 +1870,7 @@ void fuse_set_nowrite(struct inode *inode)
 	BUG_ON(fi->writectr < 0);
 	fi->writectr += FUSE_NOWRITE;
 	spin_unlock(&fi->lock);
-	wait_event(fi->page_waitq, fi->writectr == FUSE_NOWRITE);
+	fuse_wait_event(fi->page_waitq, fi->writectr == FUSE_NOWRITE);
 }
 
 /*

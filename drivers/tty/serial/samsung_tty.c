@@ -1575,6 +1575,12 @@ static void s3c24xx_serial_set_termios(struct uart_port *port,
 	 */
 
 	baud = uart_get_baud_rate(port, termios, old, 0, 3000000);
+
+	if (!baud) {
+		dev_err(port->dev, "Invalid baudrate:[%d]\n", baud);
+		return;
+	}
+
 	quot = s3c24xx_serial_getclk(ourport, baud, &clk, &clk_sel);
 	if (baud == 38400 && (port->flags & UPF_SPD_MASK) == UPF_SPD_CUST)
 		quot = port->custom_divisor;
@@ -1599,6 +1605,11 @@ static void s3c24xx_serial_set_termios(struct uart_port *port,
 
 	if (ourport->info->has_divslot) {
 		unsigned int div = ourport->baudclk_rate / baud;
+
+		if (!div) {
+			dev_err(port->dev, "Invalid div:[%d]\n", div);
+			return;
+		}
 
 		if (cfg->has_fracval) {
 			udivslot = (div & 15);
@@ -1748,7 +1759,7 @@ s3c24xx_serial_verify_port(struct uart_port *port, struct serial_struct *ser)
 
 static struct console s3c24xx_serial_console;
 
-static int __init s3c24xx_serial_console_init(void)
+static int s3c24xx_serial_console_init(void)
 {
 	register_console(&s3c24xx_serial_console);
 	return 0;
@@ -2529,7 +2540,7 @@ s3c24xx_serial_console_write(struct console *co, const char *s,
 	uart_console_write(cons_uart, s, count, s3c24xx_serial_console_putchar);
 }
 
-static void __init
+static void
 s3c24xx_serial_get_options(struct uart_port *port, int *baud,
 			   int *parity, int *bits)
 {
@@ -2592,7 +2603,7 @@ s3c24xx_serial_get_options(struct uart_port *port, int *baud,
 	}
 }
 
-static int __init
+static int
 s3c24xx_serial_console_setup(struct console *co, char *options)
 {
 	struct uart_port *port;

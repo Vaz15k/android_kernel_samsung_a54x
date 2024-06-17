@@ -70,6 +70,15 @@
 #include <asm/unistd.h>
 #include <asm/mmu_context.h>
 #include <trace/hooks/mm.h>
+#include <trace/hooks/dtask.h>
+
+#if defined(CONFIG_MEMORY_ZEROISATION)
+#include <trace/hooks/mz.h>
+#endif
+
+#ifdef CONFIG_SECURITY_DEFEX
+#include <linux/defex.h>
+#endif
 
 /*
  * The default value should be high enough to not crash a system that randomly
@@ -551,6 +560,10 @@ static void exit_mm(void)
 	mmput(mm);
 	if (test_thread_flag(TIF_MEMDIE))
 		exit_oom_victim();
+
+#if defined(CONFIG_MEMORY_ZEROISATION)
+	trace_android_vh_mz_exit(current);
+#endif
 }
 
 static struct task_struct *find_alive_thread(struct task_struct *p)
@@ -779,6 +792,10 @@ void __noreturn do_exit(long code)
 	struct task_struct *tsk = current;
 	int group_dead;
 
+#ifdef CONFIG_SECURITY_DEFEX
+	task_defex_zero_creds(current);
+#endif
+
 	/*
 	 * We can get here from a kernel oops, sometimes with preemption off.
 	 * Start by checking for critical errors.
@@ -829,6 +846,8 @@ void __noreturn do_exit(long code)
 
 	io_uring_files_cancel();
 	exit_signals(tsk);  /* sets PF_EXITING */
+
+	trace_android_vh_exit_check(current);
 
 	/* sync mm's RSS info before statistics gathering */
 	if (tsk->mm)
