@@ -61,7 +61,7 @@ static int rcd_reg_wait_sw_reset_status(u32 id)
 	return 0;
 }
 
-static void rcd_reg_check_cleanup(id)
+static void rcd_reg_check_cleanup(u32 id)
 {
 	if (rcd_read(id, DMA_RCD_IRQ) & DMA_RCD_DEADLOCK_IRQ) {
 		rcd_reg_set_sw_reset(id);
