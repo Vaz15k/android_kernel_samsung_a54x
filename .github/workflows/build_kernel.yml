@@ -1,0 +1,108 @@
+name: Build Kernel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build_squeak:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [A546E, A546B]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up build environment
+        run: |
+          sudo apt update
+          DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
+            attr golang libelf-dev dwarves rsync libbrotli-dev \
+            libgtest-dev libprotobuf-dev libunwind-dev libusb-1.0-0-dev libzstd-dev libc6-dev \
+            linux-modules-extra-$(uname -r) build-essential p7zip-full libarchive-tools
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch ToolChain
+        run: |
+          mkdir ~/Prebuilts
+          
+          git clone --depth=1 https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 ~/Prebuilts/gl-clang
+          rm -fr ~/Prebuilts/gl-clang/clang-3* ~/Prebuilts/gl-clang/clang-r4* ~/Prebuilts/gl-clang/clang-r51* 
+          
+          git clone https://android.googlesource.com/platform/prebuilts/gas/linux-x86 ~/Prebuilts/gas/linux-x86
+          
+          git clone --depth=1 https://android.googlesource.com/platform/prebuilts/build-tools ~/Prebuilts/build-tools
+
+      - name: Fetch AnyKernel3
+        run: |
+          git clone --branch a54x https://github.com/Vaz15k/AnyKernel3.git ~/AnyKernel3
+          mkdir ~/files
+      
+      - name: Set date variable
+        id: date
+        run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+      - name: Fetch Magiskboot and KSUD tools 
+        run: |
+          mkdir ~/bin
+          curl https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Tools/magiskboot -o ~/bin/magiskboot
+          chmod a+x ~/bin/magiskboot
+          sudo ln -sf ~/bin/magiskboot /usr/bin/magiskboot
+
+          curl https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Tools/ksud -o ~/bin/ksud
+          chmod a+x ~/bin/ksud
+          sudo ln -sf ~/bin/ksud /usr/bin/ksud
+          
+      - name: Download Images
+        run: |
+          mkdir ~/mkboot
+          if [ "${{ matrix.target }}" == "A546B" ]; then
+            wget -t 3 --timeout=30  https://vaz15k.github.io/literate-potato/Imagens/A546B/boot.img -O ~/mkboot/boot_A546B.img || curl https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Imagens/A546B/boot.img -o ~/mkboot/boot_A546B.img
+            wget -t 3 --timeout=30  https://vaz15k.github.io/literate-potato/Imagens/A546B/init_boot.img -O ~/mkboot/init_boot_A546B.img || curl https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Imagens/A546B/init_boot.img -o ~/mkboot/init_boot_A546B.img
+          elif [ "${{ matrix.target }}" == "A546E" ]; then
+            wget -t 3 --timeout=30  https://vaz15k.github.io/literate-potato/Imagens/A546E/boot.img -O ~/mkboot/boot_A546E.img || curl https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Imagens/A546E/boot.img -o ~/mkboot/boot_A546E.img
+            wget -t 3 --timeout=30  https://vaz15k.github.io/literate-potato/Imagens/A546E/init_boot.img -O ~/mkboot/init_boot_A546E.img || curl https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Imagens/A546E/init_boot.img -o ~/mkboot/init_boot_A546E.img
+          fi
+
+      - name: Build Kernel Clean
+        run: |
+          source ./build_kernel.sh ${{ matrix.target }}
+          cp ~/AnyKernel3/Squeak* ~/files
+
+      - name: Create LKM Kernel
+        run: |
+          cp arch/arm64/boot/Image ~/mkboot/kernel
+          cd ~/mkboot
+
+          magiskboot repack boot_${{ matrix.target }}.img boot.img
+          ksud boot-patch -b init_boot_${{ matrix.target }}.img --kmi android13-5.15 --magiskboot ~/bin/magiskboot
+          mv kernelsu* init_boot.img
+
+          tar cf Squeak_KSU-LKM_${{ matrix.target }}_${{ env.DATE }}.tar boot.img init_boot.img
+          cp Squeak* ~/files
+
+      - name: Build Kernel With KSU
+        run: |
+          rm -fr ~/mkboot
+          source ./build_kernel.sh ${{ matrix.target }} --ksu
+          cp ~/AnyKernel3/Squeak* ~/files
+
+      - name: Publish to GitHub
+        id: release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: /home/runner/files/Squeak*
+          name: Squeak Kernel - ${{ env.DATE }}
+          tag_name: "${{ env.DATE }}"
+          body: |
+
+            - **Kernel Version:** 5.15.123
+            - **Clang Version:** Clang-r522817 
+
+            :rocket: *Built with love by GitHub Actions.*
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
