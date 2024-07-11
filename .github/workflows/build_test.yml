@@ -18,31 +18,34 @@ jobs:
 
       - name: Set up build environment
         run: |
-          sudo apt update
-          DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
-            attr golang libelf-dev dwarves rsync libbrotli-dev \
+          sudo apt update && sudo apt upgrade
+          sudo apt autoremove -y
+          sudo apt install -yq tar \
+            attr libelf-dev dwarves rsync libbrotli-dev \
             libgtest-dev libprotobuf-dev libunwind-dev libusb-1.0-0-dev libzstd-dev libc6-dev \
             linux-modules-extra-$(uname -r) build-essential p7zip-full libarchive-tools
+            
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Fetch ToolChain
         run: |
-          mkdir ~/Prebuilts
-          
+          mkdir -p ~/Prebuilts
           git clone --depth=1 https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 ~/Prebuilts/gl-clang
-          rm -fr ~/Prebuilts/gl-clang/clang-3* ~/Prebuilts/gl-clang/clang-r4* ~/Prebuilts/gl-clang/clang-r51* ~/Prebuilts/gl-clang/.git*
-          
-          git clone https://android.googlesource.com/platform/prebuilts/gas/linux-x86 ~/Prebuilts/gas/linux-x86
-          
+          rm -rf ~/Prebuilts/gl-clang/clang-3* ~/Prebuilts/gl-clang/clang-r4* ~/Prebuilts/gl-clang/clang-r51* ~/Prebuilts/gl-clang/.git
+          git clone --depth=1 https://android.googlesource.com/platform/prebuilts/gas/linux-x86 ~/Prebuilts/gas/linux-x86
+          rm -rf ~/Prebuilts/gas/linux-x86/.git
           git clone --depth=1 https://android.googlesource.com/platform/prebuilts/build-tools ~/Prebuilts/build-tools
+          rm -rf ~/Prebuilts/build-tools/.git
 
       - name: Fetch AnyKernel3
         run: |
           git clone --branch a54x https://github.com/Vaz15k/AnyKernel3.git ~/AnyKernel3
-          mkdir ~/files
+          mkdir -p ~/files
 
       - name: Build Kernel Clean
         run: |
-          source ./build_kernel.sh ${{ matrix.target }}
+          ./build_kernel.sh ${{ matrix.target }}
           cp ~/AnyKernel3/Squeak* ~/files
 
       - name: Upload Test Build ${{ matrix.target }}

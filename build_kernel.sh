@@ -4,12 +4,13 @@ PARENT_DIR=`readlink -f ${DIR}/..`
 
 AK3_DIR="$HOME/AnyKernel3"
 TC_DIR="$HOME/Prebuilts"
+OUT_DIR="$DIR/out"
 
 ARGS="$*"
 DEVICE_MODEL="$1"
 
 JOBS=$(nproc --all)
-MAKE_PARAMS="-j$JOBS -C $DIR ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 CLANG_TRIPLE=llvm- CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-"
+MAKE_PARAMS="-j$JOBS -C $DIR CC=clang LLVM=1 LLVM_IAS=1 CLANG_TRIPLE=llvm- CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-"
 
 devicecheck() {
     if [ "$DEVICE_MODEL" == "A546E" ]; then
@@ -46,6 +47,7 @@ ksu() {
     # Check the value of KSU
     if [ "$KSU" == "true" ]; then
         ZIP_NAME="Squeak_KSU_"$DEVICE_NAME"_"$(date +'%Y-%m-%d')""
+		rm -fr $OUT_DIR
         if [ -d "KernelSU" ]; then
             echo "KernelSU exists"
         else
@@ -77,23 +79,14 @@ anykernel3() {
 }
 
 makezipfile() {
-    cp arch/arm64/boot/Image $AK3_DIR
+    cp $OUT_DIR/arch/arm64/boot/Image $AK3_DIR
     cd $AK3_DIR
     zip -r9 $ZIP_NAME . -x '*.git*' '*patch*' '*ramdisk*' 'README.md' '*modules*'
-    cd $DIR
 }
-
-if [ -d include/config ]; then
-    echo "Find config,will remove it"
-    rm -rf include/config
-else
-    echo "No Config,good."
-fi
 
 export PLATFORM_VERSION=14
 export ANDROID_MAJOR_VERSION=u
 export DEPMOD=depmod
-export TARGET_SOC=s5e8835
 
 echo "Starting Building ..."
 devicecheck
