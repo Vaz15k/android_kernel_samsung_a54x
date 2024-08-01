@@ -13,11 +13,11 @@ JOBS=$(nproc --all)
 MAKE_PARAMS="-j$JOBS -C $DIR CC=clang LLVM=1 LLVM_IAS=1 CLANG_TRIPLE=llvm- CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-"
 
 devicecheck() {
-    if [ "$DEVICE_MODEL" == "A546E" ]; then
-        DEVICE_NAME="A546E"
+    if [ "$DEVICE_MODEL" == "SM-A546E" ]; then
+        DEVICE_NAME="SM-A546E"
         DEFCONFIG=s5e8835-a54xnsxx_defconfig
-    elif [ "$DEVICE_MODEL" == "A546B" ]; then
-        DEVICE_NAME="A546B"
+    elif [ "$DEVICE_MODEL" == "SM-A546B" ]; then
+        DEVICE_NAME="SM-A546B"
         DEFCONFIG=s5e8835-a54xnaxx_defconfig
     else
         echo "- Config not found"

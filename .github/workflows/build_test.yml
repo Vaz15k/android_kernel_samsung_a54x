@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [A546E, A546B]
+        target: [SM-A546E, SM-A546B]
 
     steps:
       - name: Checkout repo

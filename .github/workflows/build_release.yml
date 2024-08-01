@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [A546E, A546B]
+        target: [SM-A546E, SM-A546B]
 
     steps:
       - name: Checkout repo
@@ -52,23 +52,45 @@ jobs:
       - name: Fetch Magiskboot and KSUD tools 
         run: |
           mkdir -p ~/bin
-          curl -o ~/bin/magiskboot https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Tools/magiskboot
-          chmod a+x ~/bin/magiskboot
-          sudo ln -sf ~/bin/magiskboot /usr/bin/magiskboot
-          curl -o ~/bin/ksud https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Tools/ksud
-          chmod a+x ~/bin/ksud
-          sudo ln -sf ~/bin/ksud /usr/bin/ksud
+
+          # Set MagiskBoot
+          curl https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Tools/magiskboot -o ~/bin/magiskboot
+          if [[ -f ~/bin/magiskboot ]]; then
+            chmod a+x ~/bin/magiskboot
+            sudo ln -sf ~/bin/magiskboot /usr/bin/magiskboot
+          else
+            echo "magiskboot not found"
+            exit 1
+          fi
+          # Set KSUD
+          curl https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Tools/ksud -o ~/bin/ksud
+          if [[ -f ~/bin/ksud ]]; then
+            chmod a+x ~/bin/ksud
+            sudo ln -sf ~/bin/ksud /usr/bin/ksud
+          else
+            echo "KSUD not found"
+            exit 1
+          fi
 
       - name: Download Images
         run: |
           mkdir -p ~/mkboot
-          if [[ "${{ matrix.target }}" == "A546B" ]]; then
-            wget -t 3 --timeout=30 https://vaz15k.github.io/literate-potato/Imagens/A546B/boot.img -O ~/mkboot/boot_A546B.img || curl -o ~/mkboot/boot_A546B.img https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Imagens/A546B/boot.img
-            wget -t 3 --timeout=30 https://vaz15k.github.io/literate-potato/Imagens/A546B/init_boot.img -O ~/mkboot/init_boot_A546B.img || curl -o ~/mkboot/init_boot_A546B.img https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Imagens/A546B/init_boot.img
-          elif [[ "${{ matrix.target }}" == "A546E" ]]; then
-            wget -t 3 --timeout=30 https://vaz15k.github.io/literate-potato/Imagens/A546E/boot.img -O ~/mkboot/boot_A546E.img || curl -o ~/mkboot/boot_A546E.img https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Imagens/A546E/boot.img
-            wget -t 3 --timeout=30 https://vaz15k.github.io/literate-potato/Imagens/A546E/init_boot.img -O ~/mkboot/init_boot_A546E.img || curl -o ~/mkboot/init_boot_A546E.img https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Imagens/A546E/init_boot.img
+          # Download boot.img
+          curl --retry 5 --retry-delay 5 https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Imagens/${{ matrix.target }}/boot.img -o ~/mkboot/boot_${{ matrix.target }}.img
+          if [[ -f ~/mkboot/boot_${{ matrix.target }}.img ]]; then
+            echo "Everything OK"
+          else
+            echo "boot not found"
+            exit 1
           fi
+          # Download init_boot.img
+          curl --retry 5 --retry-delay 5 https://raw.githubusercontent.com/Vaz15k/literate-potato/master/Imagens/${{ matrix.target }}/init_boot.img -o ~/mkboot/init_boot_${{ matrix.target }}.img
+          if [[ -f ~/mkboot/init_boot_${{ matrix.target }}.img ]]; then
+            echo "Everything OK"
+          else
+            echo "init_boot not found"
+            exit 1
+          fi          
 
       - name: Build Kernel Clean
         run: |
@@ -87,7 +109,7 @@ jobs:
           echo "Checking existence of images..."
           if [[ -f "boot.img" && -f "init_boot.img" ]]; then
             echo "Creating tar archive..."
-            tar -cvf Squeak_KSU-LKM_${{ matrix.target }}_${{ env.DATE }}.tar boot.img init_boot.img
+            tar -cf Squeak_KSU-LKM_${{ matrix.target }}_${{ env.DATE }}.tar boot.img init_boot.img
           else
             echo "Error: One or both images not found!"
             exit 1
