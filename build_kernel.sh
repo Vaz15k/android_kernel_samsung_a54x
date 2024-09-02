@@ -27,7 +27,7 @@ devicecheck() {
 
 toolchain() {
 	BT_DIR="$TC_DIR/build-tools"
-	CL_DIR="$TC_DIR/gl-clang/clang-r522817"
+	CL_DIR="$TC_DIR/gl-clang/clang-r536225"
 	GAS_DIR="$TC_DIR/gas"
 
 	export PATH=$CL_DIR/bin:$PATH
