@@ -34,7 +34,7 @@ jobs:
         run: |
           mkdir -p ~/Prebuilts
           git clone --depth=1 https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 ~/Prebuilts/gl-clang
-          rm -rf ~/Prebuilts/gl-clang/clang-3* ~/Prebuilts/gl-clang/clang-r4* ~/Prebuilts/gl-clang/clang-r51* ~/Prebuilts/gl-clang/clang-r52* ~/Prebuilts/gl-clang/.git
+          rm -rf ~/Prebuilts/gl-clang/clang-3* ~/Prebuilts/gl-clang/clang-r4* ~/Prebuilts/gl-clang/clang-r51* ~/Prebuilts/gl-clang/.git
           git clone --depth=1 https://android.googlesource.com/platform/prebuilts/gas/linux-x86 ~/Prebuilts/gas/linux-x86
           rm -rf ~/Prebuilts/gas/linux-x86/.git
           git clone --depth=1 https://android.googlesource.com/platform/prebuilts/build-tools ~/Prebuilts/build-tools

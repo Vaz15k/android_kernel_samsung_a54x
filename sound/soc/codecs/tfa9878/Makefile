@@ -108,3 +108,5 @@ obj-y	+= snd-soc-tfa98xx.o
 endif
 
 endif
+
+subdir-ccflags-y := $(call cc-disable-warning, enum-conversion)
