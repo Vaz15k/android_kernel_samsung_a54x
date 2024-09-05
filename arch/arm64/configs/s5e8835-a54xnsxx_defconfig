@@ -8289,8 +8289,8 @@ CONFIG_UBSAN_SANITIZE_ALL=y
 CONFIG_HAVE_KCSAN_COMPILER=y
 # end of Generic Kernel Debugging Instruments
 
-CONFIG_DEBUG_KERNEL=y
-CONFIG_DEBUG_MISC=y
+# CONFIG_DEBUG_KERNEL is not set
+# CONFIG_DEBUG_MISC is not set
 
 #
 # Memory Debugging
