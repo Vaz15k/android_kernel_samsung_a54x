@@ -85,8 +85,6 @@ makezipfile() {
     zip -r9 $ZIP_NAME . -x '*.git*' '*patch*' '*ramdisk*' 'README.md' '*modules*'
 }
 
-export PLATFORM_VERSION=14
-export ANDROID_MAJOR_VERSION=u
 export DEPMOD=depmod
 
 echo "Starting Building ..."
