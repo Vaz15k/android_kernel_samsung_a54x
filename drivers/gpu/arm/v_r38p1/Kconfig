@@ -400,7 +400,7 @@ config MALI_SEC_DEPENDENCY_CHECK
 endif
 
 config MALI_ARBITRATION
-	tristate "Enable Virtualization reference code"
+	bool "Enable Virtualization reference code"
 	depends on MALI_MIDGARD
 	default n
 	help
