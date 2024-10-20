@@ -462,6 +462,9 @@ static int dma_info_to_prot(enum dma_data_direction dir, bool coherent,
 	if (attrs & DMA_ATTR_SYS_CACHE_ONLY_NWA)
 		prot |= IOMMU_SYS_CACHE_NWA;
 
+	if (attrs & DMA_ATTR_HAS_PRIV_DATA)
+		prot |= DMA_ATTR_TO_PRIV_PROT(attrs) << IOMMU_PRIV_SHIFT;
+
 	switch (dir) {
 	case DMA_BIDIRECTIONAL:
 		return prot | IOMMU_READ | IOMMU_WRITE;
@@ -628,6 +631,7 @@ static struct page **__iommu_dma_alloc_pages(struct device *dev,
 			order_size = 1U << order;
 			if (order_mask > order_size)
 				alloc_flags |= __GFP_NORETRY;
+			trace_android_vh_adjust_alloc_flags(order, &alloc_flags);
 			page = alloc_pages_node(nid, alloc_flags, order);
 			if (!page)
 				continue;

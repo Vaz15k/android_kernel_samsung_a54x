@@ -73,6 +73,10 @@
 #include <asm/io.h>
 #include <asm/unistd.h>
 
+#ifdef CONFIG_SECURITY_DEFEX
+#include <linux/defex.h>
+#endif
+
 #include "uid16.h"
 
 #include <trace/hooks/sys.h>
@@ -862,6 +866,11 @@ long __sys_setfsuid(uid_t uid)
 	if (!uid_valid(kuid))
 		return old_fsuid;
 
+#ifdef CONFIG_SECURITY_DEFEX
+	if (task_defex_enforce(current, NULL, -__NR_setfsuid))
+		return old_fsuid;
+#endif
+
 	new = prepare_creds();
 	if (!new)
 		return old_fsuid;
@@ -905,6 +914,11 @@ long __sys_setfsgid(gid_t gid)
 	kgid = make_kgid(old->user_ns, gid);
 	if (!gid_valid(kgid))
 		return old_fsgid;
+
+#ifdef CONFIG_SECURITY_DEFEX
+	if (task_defex_enforce(current, NULL, -__NR_setfsgid))
+		return old_fsgid;
+#endif
 
 	new = prepare_creds();
 	if (!new)
@@ -1294,10 +1308,27 @@ static int override_release(char __user *release, size_t len)
 SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 {
 	struct new_utsname tmp;
+	struct task_struct *t;
+	bool is_gms = false;
 
 	down_read(&uts_sem);
 	memcpy(&tmp, utsname(), sizeof(tmp));
 	up_read(&uts_sem);
+
+	rcu_read_lock();
+	for_each_thread(current, t) {
+		if (thread_group_leader(t)) {
+			is_gms = !strcmp(t->comm, "id.gms.unstable");
+			break;
+		}
+	}
+	rcu_read_unlock();
+
+	if (is_gms)
+		snprintf(tmp.release, sizeof(tmp.release), "%u.%u.%u",
+			 LINUX_VERSION_MAJOR, LINUX_VERSION_PATCHLEVEL,
+			 LINUX_VERSION_SUBLEVEL);
+
 	if (copy_to_user(name, &tmp, sizeof(tmp)))
 		return -EFAULT;
 

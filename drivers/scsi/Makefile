@@ -14,6 +14,7 @@
 # satisfy certain initialization assumptions in the SCSI layer.
 # *!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!
 
+TARGET_SOC ?= s5e8835
 
 CFLAGS_aha152x.o =   -DAHA152X_STAT -DAUTOCONF
 
@@ -153,6 +154,12 @@ obj-$(CONFIG_CHR_DEV_SCH)	+= ch.o
 obj-$(CONFIG_SCSI_ENCLOSURE)	+= ses.o
 
 obj-$(CONFIG_SCSI_HISI_SAS) += hisi_sas/
+
+ifdef CONFIG_UFS_SRPMB
+ccflags-y += -I$(srctree)/drivers/scsi/ufs/$(TARGET_SOC)
+endif
+
+obj-$(CONFIG_UFS_SRPMB)		+= scsi_srpmb.o
 
 # This goes last, so that "real" scsi devices probe earlier
 obj-$(CONFIG_SCSI_DEBUG)	+= scsi_debug.o
