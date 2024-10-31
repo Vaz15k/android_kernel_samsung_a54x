@@ -28,6 +28,21 @@ dtbo-y += \
 	a54x_kor_skt_w00_r03.dtbo \
 	a54x_kor_skt_w00_r05.dtbo
 
+# A5460 - CHN HK
+dtbo-y += \
+	a54x_chn_hk_w00_r00.dtbo \
+	a54x_chn_hk_w00_r02.dtbo \
+	a54x_chn_hk_w00_r03.dtbo \
+	a54x_chn_hk_w00_r05.dtbo
+
+# A5460 - CHN OPEN
+dtbo-y += \
+	a54x_chn_open_w00_r00.dtbo \
+	a54x_chn_open_w00_r02.dtbo \
+	a54x_chn_open_w00_r03.dtbo \
+	a54x_chn_open_w00_r05.dtbo
+
+
 always-y    := $(dtb-y) $(dtbo-y)
 subdir-y    := $(dts-dirs)
 clean-files    := *.dtb *.reverse.dts *.dtbo
