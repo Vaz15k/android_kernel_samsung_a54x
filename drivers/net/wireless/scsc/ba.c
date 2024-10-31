@@ -205,7 +205,10 @@ static void ba_delete_ba_on_old_frame(struct net_device *dev, struct slsi_peer *
 	delba_req->header.receiver_pid = 0;
 	delba_req->header.sender_pid = 0;
 	delba_req->header.fw_reference = 0;
-	delba_req->vif = ndev_vif->ifnum;
+	if (ndev_vif->ifnum < SLSI_NAN_DATA_IFINDEX_START)
+		delba_req->vif = ndev_vif->ifnum;
+	else
+		delba_req->vif = peer->ndl_vif;
 
 	memcpy(delba_req->peer_qsta_address, peer->address, ETH_ALEN);
 	delba_req->sequence_number = sn;

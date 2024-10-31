@@ -233,7 +233,7 @@ static ssize_t sysfs_show_version_info(struct kobject *kobj,
 	struct slsi_dev *sdev = slsi_get_sdev();
 	char build_id_fw[128] = {0};
 	char build_id_drv[64] = {0};
-	int buf_size = 256;
+	int buf_size = 512;
 
 #ifndef SLSI_TEST_DEV
 	mxman_get_fw_version(build_id_fw, 128);
@@ -307,12 +307,23 @@ static ssize_t sysfs_store_debugdump(struct kobject *kobj,
 	int r;
 	struct slsi_dev *sdev = slsi_get_sdev();
 
+	if (!sdev) {
+		SLSI_INFO_NODEV("sdev is NULL can't proceed\n");
+		return count;
+	}
+
 	r = kstrtoint(buf, 10, &dump_in_progress);
-	if (r < 0)
+	if (r < 0) {
+		SLSI_INFO_NODEV("kstrtoint error:%d buf:%c\n", r, buf[0]);
 		dump_in_progress = 0;
+		return count;
+	}
 
 	SLSI_INFO_NODEV("dump_in_progress: %d\n", dump_in_progress);
-
+	if (dump_in_progress != 1) {
+		dump_in_progress = 0;
+		return count;
+	}
 	queue_work(sdev->device_wq, &sdev->chipset_logging_work);
 	return (r == 0) ? count : 0;
 
@@ -8725,6 +8736,8 @@ u8 *slsi_get_scan_extra_ies(struct slsi_dev *sdev, const u8 *ies, int total_len,
 	while (i < default_ie_len - 2) {
 		id = *(default_ies + i);
 		ie_len = *(default_ies + i + 1);
+		if (cur_len + ie_len + 2 > default_ie_len)
+			break;
 		if (!cfg80211_find_ie(id, ies, total_len)) {
 			memcpy(new_ies + cur_len, default_ies + i, ie_len + 2);
 			cur_len += (ie_len + 2);
