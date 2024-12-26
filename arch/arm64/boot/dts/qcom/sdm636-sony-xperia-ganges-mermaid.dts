@@ -1717,8 +1717,8 @@
 				leds@d800 {
 					compatible = "qcom,pm660l-wled";
 					reg = <0xd800 0xd900>;
-					interrupts = <0x03 0xd8 0x01 0x01>;
-					interrupt-names = "ovp";
+					interrupts = <0x03 0xd8 0x01 0x01 0x03 0xd8 0x02 0x01>;
+					interrupt-names = "ovp\0short";
 					label = "backlight";
 					qcom,switching-freq = <0x320>;
 					qcom,ovp-millivolt = <0x73a0>;

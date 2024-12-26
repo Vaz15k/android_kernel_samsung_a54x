@@ -241,9 +241,53 @@ done:
 	return;
 }
 
+#ifndef CONFIG_DISABLE_LOCKSCREEN_USB_RESTRICTION
+static void connect_usb_driver(struct usb_device *dev)
+{
+	struct usb_interface *intf = NULL;
+	int i, ret = 0;
+
+	if (!dev) {
+		pr_err("%s no dev\n", __func__);
+		goto done;
+	}
+
+	if (!dev->actconfig) {
+		pr_err("%s no set config\n", __func__);
+		goto done;
+	}
+
+	for (i = 0; i < dev->actconfig->desc.bNumInterfaces; i++) {
+		intf = dev->actconfig->interface[i];
+		intf->authorized = 1;
+		if (!intf->dev.driver) {
+			ret = device_attach(&intf->dev);
+			if (ret < 0)
+				pr_err("%s attach intf->dev. error ret(%d)\n", __func__, ret);
+			else
+				pr_info("%s attach intf->dev\n", __func__);
+		}
+	}
+done:
+	return;
+}
+
+static void intf_authorized_clear(struct usb_device *dev)
+{
+	struct usb_hcd *hcd = bus_to_hcd(dev->bus);
+
+	pr_info("%s\n", __func__);
+	if (hcd)
+		clear_bit(HCD_FLAG_INTF_AUTHORIZED, &hcd->flags);
+}
+#endif
+
 static int call_device_notify(struct usb_device *dev, int connect)
 {
 	struct otg_notify *o_notify = get_otg_notify();
+#ifndef CONFIG_DISABLE_LOCKSCREEN_USB_RESTRICTION
+	int ret = 0;
+#endif
 
 	if (dev->bus->root_hub != dev) {
 		if (connect) {
@@ -271,14 +315,15 @@ static int call_device_notify(struct usb_device *dev, int connect)
 				usb_set_device_state(dev, USB_STATE_NOTATTACHED);
 			}
 #ifndef CONFIG_DISABLE_LOCKSCREEN_USB_RESTRICTION
-			/* normal hub is not blocked, only allow in vpid list */
-			if (!is_usbhub(dev)) {
-				if (!usb_check_allowlist_for_lockscreen_enabled_id(dev)) {
-					pr_info("This device will be disabled.\n");
-					disconnect_usb_driver(dev);
-					usb_set_device_state(dev, USB_STATE_NOTATTACHED);
-					dev->authorized = 0;
-				}
+			ret = usb_check_allowlist_for_lockscreen_enabled_id(dev);
+			if (ret == USB_NOTIFY_NOLIST) {
+				pr_info("This device will be disabled.\n");
+				disconnect_usb_driver(dev);
+				usb_set_device_state(dev, USB_STATE_NOTATTACHED);
+				dev->authorized = 0;
+			} else if (ret == USB_NOTIFY_ALLOWLOST
+						|| ret == USB_NOTIFY_NORESTRICT) {
+				connect_usb_driver(dev);
 			}
 #endif
 		} else {
@@ -293,8 +338,13 @@ static int call_device_notify(struct usb_device *dev, int connect)
 #endif
 		}
 	} else {
-		if (connect)
+		if (connect) {
 			pr_info("%s root hub\n", __func__);
+#ifndef CONFIG_DISABLE_LOCKSCREEN_USB_RESTRICTION
+			if (check_usb_restrict_lock_state(o_notify))
+				intf_authorized_clear(dev);
+#endif
+		}
 	}
 
 	return 0;

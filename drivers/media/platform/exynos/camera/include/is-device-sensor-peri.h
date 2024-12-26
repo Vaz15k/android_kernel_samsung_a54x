@@ -379,6 +379,9 @@ struct is_ois {
 	u32				device; /* connected sensor device */
 	u32				ois_mode; /* need to mode when ois mode change */
 	u32				pre_ois_mode; /* need to mode when ois mode change */
+#if defined(PLACE_OIS_CENTERING_AFTER_OIS_INIT)
+	bool				pre_remosaic_mode;
+#endif
 	bool				ois_shift_available;
 	bool				ois_shift_available_rear2; /* need to mode when ois mode change */
 	struct v4l2_subdev		*subdev; /* connected module subdevice */

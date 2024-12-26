@@ -4078,6 +4078,9 @@ static int ois_mcu_probe(struct platform_device *pdev)
 		ois[i].device = sensor_id[i];
 		ois[i].ois_mode = OPTICAL_STABILIZATION_MODE_OFF;
 		ois[i].pre_ois_mode = OPTICAL_STABILIZATION_MODE_OFF;
+#if defined(PLACE_OIS_CENTERING_AFTER_OIS_INIT)
+		ois[i].pre_remosaic_mode = false;
+#endif
 		ois[i].ois_shift_available = false;
 		ois[i].ixc_lock = NULL;
 		ois[i].ois_ops = &ois_ops_mcu;

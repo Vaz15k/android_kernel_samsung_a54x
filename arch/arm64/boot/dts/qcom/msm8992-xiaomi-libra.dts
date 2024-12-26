@@ -247,28 +247,22 @@
 			phandle = <0x4d>;
 		};
 
-		audio@cb400000 {
-			reg = <0x00 0xcb000000 0x00 0x400000>;
-			no-mem;
-			phandle = <0x4e>;
-		};
-
 		qseecom@cb400000 {
 			reg = <0x00 0xcb400000 0x00 0x1c00000>;
 			no-mem;
-			phandle = <0x4f>;
+			phandle = <0x4e>;
 		};
 
 		adsp-rfsa@cd000000 {
 			reg = <0x00 0xcd000000 0x00 0x10000>;
 			no-map;
-			phandle = <0x50>;
+			phandle = <0x4f>;
 		};
 
 		sensor-rfsa@cd010000 {
 			reg = <0x00 0xcd010000 0x00 0x10000>;
 			no-map;
-			phandle = <0x51>;
+			phandle = <0x50>;
 		};
 
 		ramoops@dfc00000 {
@@ -294,19 +288,19 @@
 			rpm-requests {
 				compatible = "qcom,rpm-msm8994";
 				qcom,smd-channels = "rpm_requests";
-				phandle = <0x52>;
+				phandle = <0x51>;
 
 				rpmcc {
 					compatible = "qcom,rpmcc-msm8992";
 					#clock-cells = <0x01>;
-					phandle = <0x53>;
+					phandle = <0x52>;
 				};
 
 				power-controller {
 					compatible = "qcom,msm8994-rpmpd";
 					#power-domain-cells = <0x01>;
 					operating-points-v2 = <0x0c>;
-					phandle = <0x54>;
+					phandle = <0x53>;
 
 					opp-table {
 						compatible = "operating-points-v2";
@@ -314,32 +308,32 @@
 
 						opp1 {
 							opp-level = <0x01>;
-							phandle = <0x55>;
+							phandle = <0x54>;
 						};
 
 						opp2 {
 							opp-level = <0x02>;
-							phandle = <0x56>;
+							phandle = <0x55>;
 						};
 
 						opp3 {
 							opp-level = <0x03>;
-							phandle = <0x57>;
+							phandle = <0x56>;
 						};
 
 						opp4 {
 							opp-level = <0x04>;
-							phandle = <0x58>;
+							phandle = <0x57>;
 						};
 
 						opp5 {
 							opp-level = <0x05>;
-							phandle = <0x59>;
+							phandle = <0x58>;
 						};
 
 						opp6 {
 							opp-level = <0x06>;
-							phandle = <0x5a>;
+							phandle = <0x59>;
 						};
 					};
 				};
@@ -391,104 +385,104 @@
 					l1 {
 						regulator-min-microvolt = <0xf4240>;
 						regulator-max-microvolt = <0xf4240>;
-						phandle = <0x5b>;
+						phandle = <0x5a>;
 					};
 
 					l2 {
 						regulator-min-microvolt = <0x1312d0>;
 						regulator-max-microvolt = <0x1312d0>;
-						phandle = <0x5c>;
+						phandle = <0x5b>;
 					};
 
 					l3 {
 						regulator-min-microvolt = <0x124f80>;
 						regulator-max-microvolt = <0x124f80>;
-						phandle = <0x5d>;
+						phandle = <0x5c>;
 					};
 
 					l4 {
 						regulator-min-microvolt = <0x12b128>;
 						regulator-max-microvolt = <0x12b128>;
-						phandle = <0x5e>;
+						phandle = <0x5d>;
 					};
 
 					l6 {
 						regulator-min-microvolt = <0x1b7740>;
 						regulator-max-microvolt = <0x1b7740>;
-						phandle = <0x5f>;
+						phandle = <0x5e>;
 					};
 
 					l8 {
 						regulator-min-microvolt = <0x1b7740>;
 						regulator-max-microvolt = <0x1b7740>;
-						phandle = <0x60>;
+						phandle = <0x5f>;
 					};
 
 					l9 {
 						regulator-min-microvolt = <0x1b7740>;
 						regulator-max-microvolt = <0x1b7740>;
-						phandle = <0x61>;
+						phandle = <0x60>;
 					};
 
 					l10 {
 						regulator-min-microvolt = <0x1b7740>;
 						regulator-max-microvolt = <0x1b7740>;
-						phandle = <0x62>;
+						phandle = <0x61>;
 					};
 
 					l11 {
 						regulator-min-microvolt = <0x124f80>;
 						regulator-max-microvolt = <0x124f80>;
-						phandle = <0x63>;
+						phandle = <0x62>;
 					};
 
 					l12 {
 						regulator-min-microvolt = <0x1b7740>;
 						regulator-max-microvolt = <0x1b7740>;
-						phandle = <0x64>;
+						phandle = <0x63>;
 					};
 
 					l13 {
 						regulator-min-microvolt = <0x1b7740>;
 						regulator-max-microvolt = <0x2d0370>;
-						phandle = <0x65>;
+						phandle = <0x64>;
 					};
 
 					l14 {
 						regulator-min-microvolt = <0x1b7740>;
 						regulator-max-microvolt = <0x1b7740>;
-						phandle = <0x66>;
+						phandle = <0x65>;
 					};
 
 					l15 {
 						regulator-min-microvolt = <0x1b7740>;
 						regulator-max-microvolt = <0x1b7740>;
-						phandle = <0x67>;
+						phandle = <0x66>;
 					};
 
 					l16 {
 						regulator-min-microvolt = <0x2932e0>;
 						regulator-max-microvolt = <0x2932e0>;
-						phandle = <0x68>;
+						phandle = <0x67>;
 					};
 
 					l17 {
 						regulator-min-microvolt = <0x2932e0>;
 						regulator-max-microvolt = <0x2932e0>;
-						phandle = <0x69>;
+						phandle = <0x68>;
 					};
 
 					l18 {
 						regulator-min-microvolt = <0x2b7cd0>;
 						regulator-max-microvolt = <0x2b7cd0>;
 						regulator-always-on;
-						phandle = <0x6a>;
+						phandle = <0x69>;
 					};
 
 					l19 {
 						regulator-min-microvolt = <0x2ab980>;
 						regulator-max-microvolt = <0x2ab980>;
-						phandle = <0x6b>;
+						phandle = <0x6a>;
 					};
 
 					l20 {
@@ -505,81 +499,81 @@
 						regulator-min-microvolt = <0x2d0370>;
 						regulator-max-microvolt = <0x2d0370>;
 						regulator-always-on;
-						phandle = <0x6c>;
+						phandle = <0x6b>;
 					};
 
 					l22 {
 						regulator-min-microvolt = <0x2dc6c0>;
 						regulator-max-microvolt = <0x2dc6c0>;
-						phandle = <0x6d>;
+						phandle = <0x6c>;
 					};
 
 					l23 {
 						regulator-min-microvolt = <0x2ab980>;
 						regulator-max-microvolt = <0x2ab980>;
-						phandle = <0x6e>;
+						phandle = <0x6d>;
 					};
 
 					l24 {
 						regulator-min-microvolt = <0x2eebb8>;
 						regulator-max-microvolt = <0x3010b0>;
-						phandle = <0x6f>;
+						phandle = <0x6e>;
 					};
 
 					l25 {
 						regulator-min-microvolt = <0xf4240>;
 						regulator-max-microvolt = <0xf4240>;
-						phandle = <0x70>;
+						phandle = <0x6f>;
 					};
 
 					l26 {
 						regulator-min-microvolt = <0xf116c>;
 						regulator-max-microvolt = <0xf116c>;
-						phandle = <0x71>;
+						phandle = <0x70>;
 					};
 
 					l27 {
 						regulator-min-microvolt = <0x100590>;
 						regulator-max-microvolt = <0x100590>;
-						phandle = <0x72>;
+						phandle = <0x71>;
 					};
 
 					l28 {
 						regulator-min-microvolt = <0xf4240>;
 						regulator-max-microvolt = <0xf4240>;
-						phandle = <0x73>;
+						phandle = <0x72>;
 					};
 
 					l29 {
 						regulator-min-microvolt = <0x2ab980>;
 						regulator-max-microvolt = <0x2ab980>;
-						phandle = <0x74>;
+						phandle = <0x73>;
 					};
 
 					l30 {
 						regulator-min-microvolt = <0x1b7740>;
 						regulator-max-microvolt = <0x1b7740>;
-						phandle = <0x75>;
+						phandle = <0x74>;
 					};
 
 					l31 {
 						regulator-min-microvolt = <0x1343a4>;
 						regulator-max-microvolt = <0x1343a4>;
-						phandle = <0x76>;
+						phandle = <0x75>;
 					};
 
 					l32 {
 						regulator-min-microvolt = <0x1b7740>;
 						regulator-max-microvolt = <0x1b7740>;
-						phandle = <0x77>;
+						phandle = <0x76>;
 					};
 
 					lvs1 {
-						phandle = <0x78>;
+						phandle = <0x77>;
 					};
 
 					lvs2 {
-						phandle = <0x79>;
+						phandle = <0x78>;
 					};
 				};
 
@@ -587,18 +581,18 @@
 					compatible = "qcom,rpm-pmi8994-regulators";
 					vdd_s1-supply = <0x10>;
 					vdd_bst_byp-supply = <0x10>;
-					phandle = <0x7a>;
+					phandle = <0x79>;
 
 					s1 {
 						regulator-min-microvolt = <0xfa3e8>;
 						regulator-max-microvolt = <0xfa3e8>;
-						phandle = <0x7b>;
+						phandle = <0x7a>;
 					};
 
 					boost-bypass {
 						regulator-min-microvolt = <0x3010b0>;
 						regulator-max-microvolt = <0x36ee80>;
-						phandle = <0x7c>;
+						phandle = <0x7b>;
 					};
 				};
 			};
@@ -623,14 +617,14 @@
 		master-kernel {
 			qcom,entry-name = "master-kernel";
 			#qcom,smem-state-cells = <0x01>;
-			phandle = <0x7d>;
+			phandle = <0x7c>;
 		};
 
 		slave-kernel {
 			qcom,entry-name = "slave-kernel";
 			interrupt-controller;
 			#interrupt-cells = <0x02>;
-			phandle = <0x7e>;
+			phandle = <0x7d>;
 		};
 	};
 
@@ -646,14 +640,14 @@
 		master-kernel {
 			qcom,entry-name = "master-kernel";
 			#qcom,smem-state-cells = <0x01>;
-			phandle = <0x7f>;
+			phandle = <0x7e>;
 		};
 
 		slave-kernel {
 			qcom,entry-name = "slave-kernel";
 			interrupt-controller;
 			#interrupt-cells = <0x02>;
-			phandle = <0x80>;
+			phandle = <0x7f>;
 		};
 	};
 
@@ -662,7 +656,7 @@
 		#size-cells = <0x01>;
 		ranges = <0x00 0x00 0x00 0xffffffff>;
 		compatible = "simple-bus";
-		phandle = <0x81>;
+		phandle = <0x80>;
 
 		interrupt-controller@f9000000 {
 			compatible = "qcom,msm-qgic2";
@@ -747,7 +741,7 @@
 			assigned-clock-rates = <0x124f800 0x7270e00>;
 			power-domains = <0x15 0x03>;
 			qcom,select-utmi-as-pipe-clk;
-			phandle = <0x82>;
+			phandle = <0x81>;
 
 			usb@f9200000 {
 				compatible = "snps,dwc3";
@@ -777,7 +771,7 @@
 			mmc-hs400-1_8v;
 			vmmc-supply = <0x1f>;
 			vqmmc-supply = <0x11>;
-			phandle = <0x83>;
+			phandle = <0x82>;
 		};
 
 		sdhci@f98a4900 {
@@ -794,7 +788,7 @@
 			cd-gpios = <0x26 0x64 0x00>;
 			bus-width = <0x04>;
 			status = "disabled";
-			phandle = <0x84>;
+			phandle = <0x83>;
 		};
 
 		dma-controller@f9904000 {
@@ -821,7 +815,7 @@
 			pinctrl-0 = <0x27>;
 			pinctrl-1 = <0x28>;
 			status = "disabled";
-			phandle = <0x85>;
+			phandle = <0x84>;
 		};
 
 		i2c@f9923000 {
@@ -839,7 +833,7 @@
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
 			status = "disabled";
-			phandle = <0x86>;
+			phandle = <0x85>;
 		};
 
 		spi@f9923000 {
@@ -857,7 +851,7 @@
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
 			status = "disabled";
-			phandle = <0x87>;
+			phandle = <0x86>;
 		};
 
 		i2c@f9924000 {
@@ -875,7 +869,7 @@
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
 			status = "okay";
-			phandle = <0x88>;
+			phandle = <0x87>;
 		};
 
 		i2c@f9926000 {
@@ -893,7 +887,7 @@
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
 			status = "disabled";
-			phandle = <0x89>;
+			phandle = <0x88>;
 		};
 
 		i2c@f9927000 {
@@ -911,7 +905,7 @@
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
 			status = "okay";
-			phandle = <0x8a>;
+			phandle = <0x89>;
 		};
 
 		i2c@f9928000 {
@@ -929,7 +923,7 @@
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
 			status = "okay";
-			phandle = <0x8b>;
+			phandle = <0x8a>;
 		};
 
 		dma-controller@f9944000 {
@@ -958,7 +952,7 @@
 			pinctrl-0 = <0x37>;
 			pinctrl-1 = <0x38>;
 			status = "okay";
-			phandle = <0x8c>;
+			phandle = <0x8b>;
 		};
 
 		i2c@f9963000 {
@@ -976,7 +970,7 @@
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
 			status = "okay";
-			phandle = <0x8d>;
+			phandle = <0x8c>;
 		};
 
 		spi@f9966000 {
@@ -994,7 +988,7 @@
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
 			status = "disabled";
-			phandle = <0x8e>;
+			phandle = <0x8d>;
 		};
 
 		i2c@f9967000 {
@@ -1012,7 +1006,7 @@
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
 			status = "okay";
-			phandle = <0x8f>;
+			phandle = <0x8e>;
 		};
 
 		clock-controller@fc400000 {
@@ -1047,7 +1041,7 @@
 			#size-cells = <0x00>;
 			interrupt-controller;
 			#interrupt-cells = <0x04>;
-			phandle = <0x90>;
+			phandle = <0x8f>;
 
 			pmic@0 {
 				compatible = "qcom,pm8994\0qcom,spmi-pmic";
@@ -1067,7 +1061,7 @@
 					reg = <0x800>;
 					mode-bootloader = <0x02>;
 					mode-recovery = <0x01>;
-					phandle = <0x91>;
+					phandle = <0x90>;
 
 					pwrkey {
 						compatible = "qcom,pm8941-pwrkey";
@@ -1083,7 +1077,7 @@
 						debounce = <0x3d09>;
 						bias-pull-up;
 						status = "disabled";
-						phandle = <0x92>;
+						phandle = <0x91>;
 					};
 				};
 
@@ -1153,7 +1147,7 @@
 					gpio-controller;
 					#gpio-cells = <0x02>;
 					interrupts = <0x00 0xa0 0x00 0x00 0x00 0xa1 0x00 0x00 0x00 0xa2 0x00 0x00 0x00 0xa3 0x00 0x00 0x00 0xa4 0x00 0x00 0x00 0xa5 0x00 0x00 0x00 0xa6 0x00 0x00 0x00 0xa7 0x00 0x00>;
-					phandle = <0x93>;
+					phandle = <0x92>;
 				};
 			};
 
@@ -1165,14 +1159,14 @@
 
 				regulators {
 					compatible = "qcom,pm8994-regulators";
-					phandle = <0x94>;
+					phandle = <0x93>;
 
 					s8 {
 						regulator-min-microvolt = <0xa6040>;
 						regulator-max-microvolt = <0x120160>;
 						regulator-always-on;
 						regulator-boot-on;
-						phandle = <0x95>;
+						phandle = <0x94>;
 					};
 
 					s11 {
@@ -1180,7 +1174,7 @@
 						regulator-max-microvolt = <0x12b128>;
 						regulator-always-on;
 						regulator-boot-on;
-						phandle = <0x96>;
+						phandle = <0x95>;
 					};
 				};
 			};
@@ -1213,20 +1207,18 @@
 					compatible = "qcom,pmi8994-regulators";
 					#address-cells = <0x01>;
 					#size-cells = <0x01>;
-					phandle = <0x97>;
+					phandle = <0x96>;
 				};
 
 				wled@d800 {
 					compatible = "qcom,pmi8994-wled";
 					reg = <0xd800 0xd900>;
-					interrupts = <0x03 0xd8 0x02 0x01>;
-					interrupt-names = "short";
-					qcom,num-strings = <0x03>;
-					qcom,enabled-strings = <0x00 0x01 0x02 0x03>;
+					interrupts = <0x03 0xd8 0x01 0x01 0x03 0xd8 0x02 0x01>;
+					interrupt-names = "ovp\0short";
 					qcom,cabc;
 					qcom,external-pfet;
 					status = "disabled";
-					phandle = <0x98>;
+					phandle = <0x97>;
 				};
 			};
 		};
@@ -1544,7 +1536,7 @@
 	timer {
 		compatible = "arm,armv8-timer";
 		interrupts = <0x01 0x02 0xf08 0x01 0x03 0xf08 0x01 0x04 0xf08 0x01 0x01 0xf08>;
-		phandle = <0x99>;
+		phandle = <0x98>;
 	};
 
 	vph-pwr-regulator {
@@ -1569,14 +1561,14 @@
 					temperature = <0x17318>;
 					hysteresis = <0x7d0>;
 					type = "passive";
-					phandle = <0x9a>;
+					phandle = <0x99>;
 				};
 
 				pm8994-crit {
 					temperature = <0x1e848>;
 					hysteresis = <0x7d0>;
 					type = "critical";
-					phandle = <0x9b>;
+					phandle = <0x9a>;
 				};
 			};
 		};
@@ -1622,7 +1614,6 @@
 		tzapp = "/reserved-memory/tzapp@ea00000";
 		mdm_rfsa_mem = "/reserved-memory/mdm-rfsa@ca0b0000";
 		rmtfs_mem = "/reserved-memory/rmtfs@ca100000";
-		audio_mem = "/reserved-memory/audio@cb400000";
 		qseecom_mem = "/reserved-memory/qseecom@cb400000";
 		adsp_rfsa_mem = "/reserved-memory/adsp-rfsa@cd000000";
 		sensor_rfsa_mem = "/reserved-memory/sensor-rfsa@cd010000";

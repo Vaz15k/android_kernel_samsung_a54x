@@ -1010,16 +1010,27 @@ static inline int exynos_pm_qos_get_value(struct exynos_pm_qos_constraints *c)
 {
 	struct plist_node *node;
 	int total_value = 0;
+	struct exynos_pm_qos_request *req;
 
 	if (plist_head_empty(&c->list))
 		return c->no_constraint_value;
 
 	switch (c->type) {
 	case EXYNOS_PM_QOS_MIN:
-		return plist_first(&c->list)->prio;
+		list_for_each_entry(node, &c->list.node_list, node_list) {
+			req = container_of(node, struct exynos_pm_qos_request, node);
+			if (!req->nosync)
+				break;
+		}
+		return node->prio;
 
 	case EXYNOS_PM_QOS_MAX:
-		return plist_last(&c->list)->prio;
+		list_for_each_entry_reverse(node, &c->list.node_list, node_list) {
+			req = container_of(node, struct exynos_pm_qos_request, node);
+			if (!req->nosync)
+				break;
+		}
+		return node->prio;
 
 	case EXYNOS_PM_QOS_SUM:
 		plist_for_each(node, &c->list)
@@ -1117,7 +1128,9 @@ void show_exynos_pm_qos_data(int index)
 	plist_for_each_entry(req, &c->list, node) {
 		char *state = "Default";
 
-		if ((req->node).prio != c->default_value) {
+		if (req->nosync) {
+			state = "Inactive";
+		} else if ((req->node).prio != c->default_value) {
 			active_reqs++;
 			state = "Active";
 		} else {
@@ -1315,6 +1328,8 @@ int exynos_pm_qos_update_target(struct exynos_pm_qos_constraints *c, struct plis
 	if (!nosync)
 		mutex_lock(&c->mlock);
 	spin_lock_irqsave(&c->lock, flags);
+
+	req->nosync = nosync;
 
 	prev_value = exynos_pm_qos_get_value(c);
 	if (value == EXYNOS_PM_QOS_DEFAULT_VALUE)

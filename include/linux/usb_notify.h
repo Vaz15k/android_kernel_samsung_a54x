@@ -174,7 +174,13 @@ enum usb_lock_state {
 	USB_NOTIFY_UNLOCK = 0,
 	USB_NOTIFY_LOCK_USB_WORK,
 	USB_NOTIFY_LOCK_USB_RESTRICT,
-	USB_NOTIFY_INIT_STATE,
+	USB_NOTIFY_INIT_STATE = 3,
+};
+
+enum usb_check_allowlist_result {
+	USB_NOTIFY_NOLIST = 0,
+	USB_NOTIFY_ALLOWLOST,
+	USB_NOTIFY_NORESTRICT,
 };
 
 struct otg_notify {
@@ -255,6 +261,7 @@ extern int check_usbgroup(struct usb_device *dev);
 extern int is_usbhub(struct usb_device *dev);
 #ifndef CONFIG_DISABLE_LOCKSCREEN_USB_RESTRICTION
 extern int disconnect_unauthorized_device(struct usb_device *dev);
+extern bool check_usb_restrict_lock_state(struct otg_notify *n);
 #endif
 extern void send_usb_restrict_uevent(int usb_restrict);
 #if defined(CONFIG_USB_HW_PARAM)
@@ -326,6 +333,7 @@ static inline int check_usbgroup(struct usb_device *dev) {return 0; }
 static inline int is_usbhub(struct usb_device *dev) {return 0; }
 #ifndef CONFIG_DISABLE_LOCKSCREEN_USB_RESTRICTION
 static inline int disconnect_unauthorized_device(struct usb_device *dev) {return 0; }
+static inline bool check_usb_restrict_lock_state(struct otg_notify *n) {return false; }
 #endif
 static inline void send_usb_restrict_uevent(int usb_restrict) {}
 #if defined(CONFIG_USB_HW_PARAM)

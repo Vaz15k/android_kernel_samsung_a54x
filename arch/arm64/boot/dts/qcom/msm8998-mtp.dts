@@ -2223,11 +2223,14 @@
 			cpu = <0x0c>;
 			phandle = <0xf0>;
 
-			port {
+			out-ports {
 
-				endpoint {
-					remote-endpoint = <0x4f>;
-					phandle = <0x49>;
+				port {
+
+					endpoint {
+						remote-endpoint = <0x4f>;
+						phandle = <0x49>;
+					};
 				};
 			};
 		};
@@ -2241,11 +2244,14 @@
 			cpu = <0x0d>;
 			phandle = <0xf1>;
 
-			port {
+			out-ports {
 
-				endpoint {
-					remote-endpoint = <0x50>;
-					phandle = <0x4a>;
+				port {
+
+					endpoint {
+						remote-endpoint = <0x50>;
+						phandle = <0x4a>;
+					};
 				};
 			};
 		};
@@ -2259,11 +2265,14 @@
 			cpu = <0x0e>;
 			phandle = <0xf2>;
 
-			port {
+			out-ports {
 
-				endpoint {
-					remote-endpoint = <0x51>;
-					phandle = <0x4b>;
+				port {
+
+					endpoint {
+						remote-endpoint = <0x51>;
+						phandle = <0x4b>;
+					};
 				};
 			};
 		};
@@ -2277,11 +2286,14 @@
 			cpu = <0x0f>;
 			phandle = <0xf3>;
 
-			port {
+			out-ports {
 
-				endpoint {
-					remote-endpoint = <0x52>;
-					phandle = <0x4c>;
+				port {
+
+					endpoint {
+						remote-endpoint = <0x52>;
+						phandle = <0x4c>;
+					};
 				};
 			};
 		};
@@ -2425,6 +2437,16 @@
 						phandle = <0xfd>;
 					};
 				};
+
+				leds@d800 {
+					compatible = "qcom,pmi8998-wled";
+					reg = <0xd800 0xd900>;
+					interrupts = <0x03 0xd8 0x01 0x01 0x03 0xd8 0x02 0x01>;
+					interrupt-names = "ovp\0short";
+					label = "backlight";
+					status = "disabled";
+					phandle = <0xfe>;
+				};
 			};
 
 			pmic@4 {
@@ -2432,7 +2454,7 @@
 				reg = <0x04 0x00>;
 				#address-cells = <0x01>;
 				#size-cells = <0x00>;
-				phandle = <0xfe>;
+				phandle = <0xff>;
 
 				gpios@c000 {
 					compatible = "qcom,pm8005-gpio\0qcom,spmi-gpio";
@@ -2451,7 +2473,7 @@
 				reg = <0x05 0x00>;
 				#address-cells = <0x01>;
 				#size-cells = <0x00>;
-				phandle = <0xff>;
+				phandle = <0x100>;
 
 				pm8005-regulators {
 					compatible = "qcom,pm8005-regulators";
@@ -2462,7 +2484,7 @@
 						regulator-max-microvolt = <0x10c8e0>;
 						regulator-enable-ramp-delay = <0x1f4>;
 						regulator-always-on;
-						phandle = <0x100>;
+						phandle = <0x101>;
 					};
 				};
 			};
@@ -2483,7 +2505,7 @@
 			interrupt-names = "hs_phy_irq\0ss_phy_irq";
 			power-domains = <0x20 0x02>;
 			resets = <0x20 0x12>;
-			phandle = <0x101>;
+			phandle = <0x102>;
 
 			dwc3@a800000 {
 				compatible = "snps,dwc3";
@@ -2496,7 +2518,7 @@
 				snps,has-lpm-erratum;
 				snps,hird-threshold = [10];
 				dr_mode = "host";
-				phandle = <0x102>;
+				phandle = <0x103>;
 			};
 		};
 
@@ -2514,7 +2536,7 @@
 			reset-names = "phy\0common";
 			vdda-phy-supply = <0x23>;
 			vdda-pll-supply = <0x24>;
-			phandle = <0x103>;
+			phandle = <0x104>;
 
 			phy@c010200 {
 				reg = <0xc010200 0x128 0xc010400 0x200 0xc010c00 0x20c 0xc010600 0x128 0xc010800 0x200>;
@@ -2556,7 +2578,7 @@
 			pinctrl-names = "default\0sleep";
 			pinctrl-0 = <0x5f 0x60 0x61 0x62>;
 			pinctrl-1 = <0x63 0x64 0x65 0x66>;
-			phandle = <0x104>;
+			phandle = <0x105>;
 		};
 
 		dma-controller@c144000 {
@@ -2584,7 +2606,7 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <0x68>;
 			status = "okay";
-			phandle = <0x105>;
+			phandle = <0x106>;
 
 			bluetooth {
 				compatible = "qcom,wcn3990-bt";
@@ -2611,7 +2633,7 @@
 			status = "disabled";
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
-			phandle = <0x106>;
+			phandle = <0x107>;
 		};
 
 		i2c@c176000 {
@@ -2629,7 +2651,7 @@
 			status = "disabled";
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
-			phandle = <0x107>;
+			phandle = <0x108>;
 		};
 
 		i2c@c177000 {
@@ -2647,7 +2669,7 @@
 			status = "disabled";
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
-			phandle = <0x108>;
+			phandle = <0x109>;
 		};
 
 		i2c@c178000 {
@@ -2665,7 +2687,7 @@
 			status = "disabled";
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
-			phandle = <0x109>;
+			phandle = <0x10a>;
 		};
 
 		i2c@c179000 {
@@ -2683,7 +2705,7 @@
 			status = "disabled";
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
-			phandle = <0x10a>;
+			phandle = <0x10b>;
 		};
 
 		i2c@c17a000 {
@@ -2701,7 +2723,7 @@
 			status = "disabled";
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
-			phandle = <0x10b>;
+			phandle = <0x10c>;
 		};
 
 		dma@c184000 {
@@ -2725,7 +2747,7 @@
 			clocks = <0x20 0x45 0x20 0x36>;
 			clock-names = "core\0iface";
 			status = "okay";
-			phandle = <0x10c>;
+			phandle = <0x10d>;
 		};
 
 		i2c@c1b5000 {
@@ -2743,7 +2765,7 @@
 			status = "disabled";
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
-			phandle = <0x10d>;
+			phandle = <0x10e>;
 		};
 
 		i2c@c1b6000 {
@@ -2761,7 +2783,7 @@
 			status = "disabled";
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
-			phandle = <0x10e>;
+			phandle = <0x10f>;
 		};
 
 		i2c@c1b7000 {
@@ -2779,7 +2801,7 @@
 			status = "disabled";
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
-			phandle = <0x10f>;
+			phandle = <0x110>;
 		};
 
 		i2c@c1b8000 {
@@ -2797,7 +2819,7 @@
 			status = "disabled";
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
-			phandle = <0x110>;
+			phandle = <0x111>;
 		};
 
 		i2c@c1b9000 {
@@ -2815,7 +2837,7 @@
 			status = "disabled";
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
-			phandle = <0x111>;
+			phandle = <0x112>;
 		};
 
 		i2c@c1ba000 {
@@ -2833,7 +2855,7 @@
 			status = "disabled";
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
-			phandle = <0x112>;
+			phandle = <0x113>;
 		};
 
 		remoteproc@17300000 {
@@ -2849,7 +2871,7 @@
 			power-domains = <0x2c 0x00>;
 			power-domain-names = "cx";
 			status = "okay";
-			phandle = <0x113>;
+			phandle = <0x114>;
 
 			glink-edge {
 				interrupts = <0x00 0x9d 0x01>;
@@ -2951,7 +2973,7 @@
 			vdd-1.8-xo-supply = <0x69>;
 			vdd-1.3-rfa-supply = <0x6a>;
 			vdd-3.3-ch0-supply = <0x6b>;
-			phandle = <0x114>;
+			phandle = <0x115>;
 		};
 	};
 
@@ -3193,13 +3215,13 @@
 		apss_merge_funnel_out = "/soc/funnel@7b70000/out-ports/port/endpoint";
 		apss_merge_funnel_in = "/soc/funnel@7b70000/in-ports/port/endpoint";
 		etm5 = "/soc/etm@7c40000";
-		etm4_out = "/soc/etm@7c40000/port/endpoint";
+		etm4_out = "/soc/etm@7c40000/out-ports/port/endpoint";
 		etm6 = "/soc/etm@7d40000";
-		etm5_out = "/soc/etm@7d40000/port/endpoint";
+		etm5_out = "/soc/etm@7d40000/out-ports/port/endpoint";
 		etm7 = "/soc/etm@7e40000";
-		etm6_out = "/soc/etm@7e40000/port/endpoint";
+		etm6_out = "/soc/etm@7e40000/out-ports/port/endpoint";
 		etm8 = "/soc/etm@7f40000";
-		etm7_out = "/soc/etm@7f40000/port/endpoint";
+		etm7_out = "/soc/etm@7f40000/out-ports/port/endpoint";
 		spmi_bus = "/soc/spmi@800f000";
 		pm8998_lsid0 = "/soc/spmi@800f000/pmic@0";
 		pm8998_pon = "/soc/spmi@800f000/pmic@0/pon@800";
@@ -3214,6 +3236,7 @@
 		pmi8998_lsid1 = "/soc/spmi@800f000/pmic@3";
 		ibb = "/soc/spmi@800f000/pmic@3/labibb/ibb";
 		lab = "/soc/spmi@800f000/pmic@3/labibb/lab";
+		pmi8998_wled = "/soc/spmi@800f000/pmic@3/leds@d800";
 		pm8005_lsid0 = "/soc/spmi@800f000/pmic@4";
 		pm8005_gpio = "/soc/spmi@800f000/pmic@4/gpios@c000";
 		pm8005_lsid1 = "/soc/spmi@800f000/pmic@5";

@@ -518,7 +518,6 @@ static void decon_check_display_config(struct exynos_drm_crtc *exynos_crtc,
 	const struct drm_connector_state *new_conn_state;
 	struct exynos_drm_connector_state *new_exynos_conn_state;
 	struct drm_crtc_state *crtc_state = &new_exynos_crtc_state->base;
-	struct dsim_device *dsim = NULL;
 	struct decon_device *decon = exynos_crtc->ctx;
 
 	if ((__is_recovery_supported(decon) && __is_recovery_begin(decon)) ||
@@ -551,8 +550,7 @@ static void decon_check_display_config(struct exynos_drm_crtc *exynos_crtc,
 	if (!crtc_state->active)
 		return;
 
-	dsim = decon_get_dsim(decon);
-	if (crtc_needs_colormap(crtc_state) && !dsim_is_fb_reserved(dsim))
+	if (crtc_needs_colormap(crtc_state))
 		new_exynos_crtc_state->need_colormap = true;
 }
 
@@ -926,6 +924,7 @@ static void decon_atomic_flush(struct exynos_drm_crtc *exynos_crtc,
 					to_exynos_crtc_state(new_crtc_state);
 	struct exynos_drm_crtc_state *old_exynos_crtc_state =
 					to_exynos_crtc_state(old_crtc_state);
+	struct dsim_device *dsim = NULL;
 #if IS_ENABLED(CONFIG_DRM_MCD_COMMON)
 	bool color_map = true;
 #endif
@@ -937,7 +936,8 @@ static void decon_atomic_flush(struct exynos_drm_crtc *exynos_crtc,
 	else if (old_exynos_crtc_state->wb_type == EXYNOS_WB_CWB)
 		decon_reg_set_cwb_enable(decon->id, false);
 
-	if (new_exynos_crtc_state->need_colormap) {
+	dsim = decon_get_dsim(decon);
+	if (new_exynos_crtc_state->need_colormap && !dsim_is_fb_reserved(dsim)) {
 		const int win_id = decon_get_win_id(new_crtc_state, 0);
 
 		if (win_id < 0) {

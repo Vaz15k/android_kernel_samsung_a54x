@@ -216,8 +216,22 @@ void is_sensor_ois_set_init_work(struct work_struct *data)
 	if (ret < 0)
 		err("v4l2_subdev_call(ois_init) is fail(%d)", ret);
 #endif
+#if defined(PLACE_OIS_CENTERING_AFTER_OIS_INIT)	/* Only M35x uses this feature */
+	/* Switching back from 50M to 12M, do not use the centering mode to avoid jerking preview shortly 
+	 * Entering at 50M, remosaic_mode is still 0, AFter high-resolution capture, switching back to 12M, remosaic is 1
+	 * So, the codes are designed as below
+	 */
+	if (sensor_peri->mcu->ois->pre_remosaic_mode) {
+		ret = CALL_OISOPS(sensor_peri->mcu->ois, ois_set_mode, sensor_peri->subdev_mcu,
+			sensor_peri->mcu->ois->ois_mode);
+	} else {
+		ret = CALL_OISOPS(sensor_peri->mcu->ois, ois_set_mode, sensor_peri->subdev_mcu,
+			OPTICAL_STABILIZATION_MODE_CENTERING);
+	}
+#else
 	ret = CALL_OISOPS(sensor_peri->mcu->ois, ois_set_mode, sensor_peri->subdev_mcu,
 		sensor_peri->mcu->ois->ois_mode);
+#endif
 	if (ret < 0)
 		err("v4l2_subdev_call(ois_set_mode) is fail(%d)", ret);
 
@@ -1875,9 +1889,12 @@ int is_sensor_peri_s_stream(struct is_device_sensor *device,
 		if (!skip_sub_device_mcu) {
 			info("[%s] mcu join time E\n", __func__);
 
-			if (sensor_peri->mcu && sensor_peri->mcu->ois)
+			if (sensor_peri->mcu && sensor_peri->mcu->ois) {
 				flush_work(&sensor_peri->mcu->ois->ois_set_init_work);
-
+#if defined(PLACE_OIS_CENTERING_AFTER_OIS_INIT)
+				sensor_peri->mcu->ois->pre_remosaic_mode = sensor_peri->cis.cis_data->remosaic_mode;
+#endif
+			}
 			info("[%s] mcu join time X\n", __func__);
 		}
 

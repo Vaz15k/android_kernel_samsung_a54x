@@ -1936,9 +1936,9 @@
 					clocks = <0x09 0x5a>;
 					clock-names = "xclk";
 					clock-frequency = <0x16c6140>;
-					vdddo-supply = <0x41>;
-					vdda-supply = <0x42>;
-					vddd-supply = <0x43>;
+					DOVDD-supply = <0x41>;
+					AVDD-supply = <0x42>;
+					DVDD-supply = <0x43>;
 					status = "disabled";
 
 					port {
@@ -2006,7 +2006,7 @@
 			#size-cells = <0x01>;
 			#iommu-cells = <0x01>;
 			compatible = "qcom,msm8916-iommu\0qcom,msm-iommu-v1";
-			ranges = <0x00 0x1e20000 0x40000>;
+			ranges = <0x00 0x1e20000 0x20000>;
 			reg = <0x1ef0000 0x3000>;
 			clocks = <0x09 0x81 0x09 0x8b>;
 			clock-names = "iface\0bus";
@@ -2606,6 +2606,9 @@
 				clock-names = "cec";
 				pd-gpios = <0x34 0x20 0x00>;
 				avdd-supply = <0x3a>;
+				a2vdd-supply = <0x3a>;
+				dvdd-supply = <0x3a>;
+				pvdd-supply = <0x3a>;
 				v1p2-supply = <0x3a>;
 				v3p3-supply = <0x82>;
 				pinctrl-names = "default\0sleep";

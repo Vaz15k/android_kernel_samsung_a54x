@@ -2210,11 +2210,14 @@
 			cpu = <0x0a>;
 			phandle = <0xef>;
 
-			port {
+			out-ports {
 
-				endpoint {
-					remote-endpoint = <0x4a>;
-					phandle = <0x44>;
+				port {
+
+					endpoint {
+						remote-endpoint = <0x4a>;
+						phandle = <0x44>;
+					};
 				};
 			};
 		};
@@ -2228,11 +2231,14 @@
 			cpu = <0x0b>;
 			phandle = <0xf0>;
 
-			port {
+			out-ports {
 
-				endpoint {
-					remote-endpoint = <0x4b>;
-					phandle = <0x45>;
+				port {
+
+					endpoint {
+						remote-endpoint = <0x4b>;
+						phandle = <0x45>;
+					};
 				};
 			};
 		};
@@ -2246,11 +2252,14 @@
 			cpu = <0x0c>;
 			phandle = <0xf1>;
 
-			port {
+			out-ports {
 
-				endpoint {
-					remote-endpoint = <0x4c>;
-					phandle = <0x46>;
+				port {
+
+					endpoint {
+						remote-endpoint = <0x4c>;
+						phandle = <0x46>;
+					};
 				};
 			};
 		};
@@ -2264,11 +2273,14 @@
 			cpu = <0x0d>;
 			phandle = <0xf2>;
 
-			port {
+			out-ports {
 
-				endpoint {
-					remote-endpoint = <0x4d>;
-					phandle = <0x47>;
+				port {
+
+					endpoint {
+						remote-endpoint = <0x4d>;
+						phandle = <0x47>;
+					};
 				};
 			};
 		};
@@ -3150,13 +3162,13 @@
 		apss_merge_funnel_out = "/soc/funnel@7b70000/out-ports/port/endpoint";
 		apss_merge_funnel_in = "/soc/funnel@7b70000/in-ports/port/endpoint";
 		etm5 = "/soc/etm@7c40000";
-		etm4_out = "/soc/etm@7c40000/port/endpoint";
+		etm4_out = "/soc/etm@7c40000/out-ports/port/endpoint";
 		etm6 = "/soc/etm@7d40000";
-		etm5_out = "/soc/etm@7d40000/port/endpoint";
+		etm5_out = "/soc/etm@7d40000/out-ports/port/endpoint";
 		etm7 = "/soc/etm@7e40000";
-		etm6_out = "/soc/etm@7e40000/port/endpoint";
+		etm6_out = "/soc/etm@7e40000/out-ports/port/endpoint";
 		etm8 = "/soc/etm@7f40000";
-		etm7_out = "/soc/etm@7f40000/port/endpoint";
+		etm7_out = "/soc/etm@7f40000/out-ports/port/endpoint";
 		spmi_bus = "/soc/spmi@800f000";
 		pm8998_lsid0 = "/soc/spmi@800f000/pmic@0";
 		pm8998_pon = "/soc/spmi@800f000/pmic@0/pon@800";

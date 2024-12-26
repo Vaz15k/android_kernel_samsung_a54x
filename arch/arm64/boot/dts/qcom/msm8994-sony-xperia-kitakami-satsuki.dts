@@ -1251,10 +1251,8 @@
 				wled@d800 {
 					compatible = "qcom,pmi8994-wled";
 					reg = <0xd800 0xd900>;
-					interrupts = <0x03 0xd8 0x02 0x01>;
-					interrupt-names = "short";
-					qcom,num-strings = <0x03>;
-					qcom,enabled-strings = <0x00 0x01 0x02 0x03>;
+					interrupts = <0x03 0xd8 0x01 0x01 0x03 0xd8 0x02 0x01>;
+					interrupt-names = "ovp\0short";
 					qcom,cabc;
 					qcom,external-pfet;
 					status = "disabled";

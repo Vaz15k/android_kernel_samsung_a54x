@@ -94,6 +94,7 @@ android/abi_gki_aarch64
 android/abi_gki_aarch64_virtual_device
 android/abi_gki_aarch64_virtual_device_removed
 android/abi_gki_aarch64_type_visibility
+android/abi_gki_aarch64_arcvm
 android/abi_gki_aarch64_arg
 android/abi_gki_aarch64_db845c
 android/abi_gki_aarch64_exynosauto
@@ -108,6 +109,7 @@ android/abi_gki_aarch64_microsoft
 android/abi_gki_aarch64_moto
 android/abi_gki_aarch64_mtktv
 android/abi_gki_aarch64_mtk
+android/abi_gki_aarch64_nothing
 android/abi_gki_aarch64_qcom
 android/abi_gki_aarch64_rtktv
 android/abi_gki_aarch64_sony
@@ -122,6 +124,7 @@ android/abi_gki_aarch64_pasa
 android/abi_gki_aarch64_zeku
 android/abi_gki_aarch64_lenovo
 android/abi_gki_aarch64_transsion
+android/abi_gki_aarch64_honda
 "
 
 # Update BUILD.bazel, define_common_kernels() if the value is not 1.

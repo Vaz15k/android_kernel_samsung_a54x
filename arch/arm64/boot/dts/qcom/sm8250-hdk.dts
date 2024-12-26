@@ -83,7 +83,7 @@
 			reg = <0x00 0x00>;
 			enable-method = "psci";
 			capacity-dmips-mhz = <0x1c0>;
-			dynamic-power-coefficient = <0xcd>;
+			dynamic-power-coefficient = <0x69>;
 			next-level-cache = <0x02>;
 			qcom,freq-domain = <0x03 0x00>;
 			#cooling-cells = <0x02>;
@@ -107,7 +107,7 @@
 			reg = <0x00 0x100>;
 			enable-method = "psci";
 			capacity-dmips-mhz = <0x1c0>;
-			dynamic-power-coefficient = <0xcd>;
+			dynamic-power-coefficient = <0x69>;
 			next-level-cache = <0x05>;
 			qcom,freq-domain = <0x03 0x00>;
 			#cooling-cells = <0x02>;
@@ -126,7 +126,7 @@
 			reg = <0x00 0x200>;
 			enable-method = "psci";
 			capacity-dmips-mhz = <0x1c0>;
-			dynamic-power-coefficient = <0xcd>;
+			dynamic-power-coefficient = <0x69>;
 			next-level-cache = <0x06>;
 			qcom,freq-domain = <0x03 0x00>;
 			#cooling-cells = <0x02>;
@@ -145,7 +145,7 @@
 			reg = <0x00 0x300>;
 			enable-method = "psci";
 			capacity-dmips-mhz = <0x1c0>;
-			dynamic-power-coefficient = <0xcd>;
+			dynamic-power-coefficient = <0x69>;
 			next-level-cache = <0x07>;
 			qcom,freq-domain = <0x03 0x00>;
 			#cooling-cells = <0x02>;
@@ -1419,6 +1419,7 @@
 			wake-gpios = <0x3e 0x51 0x00>;
 			pinctrl-names = "default";
 			pinctrl-0 = <0x3f>;
+			dma-coherent;
 			status = "disabled";
 			phandle = <0xec>;
 		};
@@ -1480,6 +1481,7 @@
 			wake-gpios = <0x3e 0x54 0x00>;
 			pinctrl-names = "default";
 			pinctrl-0 = <0x41>;
+			dma-coherent;
 			status = "disabled";
 			phandle = <0xee>;
 		};
@@ -1541,6 +1543,7 @@
 			wake-gpios = <0x3e 0x57 0x00>;
 			pinctrl-names = "default";
 			pinctrl-0 = <0x43>;
+			dma-coherent;
 			status = "disabled";
 			phandle = <0xf0>;
 		};
@@ -3881,7 +3884,7 @@
 			compatible = "qcom,apss-wdt-sm8250\0qcom,kpss-wdt";
 			reg = <0x00 0x17c10000 0x00 0x1000>;
 			clocks = <0x1a>;
-			interrupts = <0x00 0x00 0x04>;
+			interrupts = <0x00 0x00 0x01>;
 		};
 
 		timer@17c20000 {

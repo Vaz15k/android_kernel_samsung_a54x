@@ -6,6 +6,8 @@
 
 struct ssg_request_info {
 	pid_t tgid;
+
+	sector_t sector;
 	unsigned int data_size;
 
 	struct blkcg_gq *blkg;

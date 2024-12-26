@@ -32,6 +32,7 @@
 #include <linux/fs_context.h>
 #include <linux/shmem_fs.h>
 #include <linux/mnt_idmapping.h>
+#include <linux/delay.h>
 #include <linux/fslog.h>
 #ifdef CONFIG_KDP_NS
 #include <linux/kdp.h>
@@ -1448,7 +1449,7 @@ struct vfsmount *mntget(struct vfsmount *mnt)
 		mnt_add_count(real_mount(mnt), 1);
 	return mnt;
 }
-EXPORT_SYMBOL(mntget);
+EXPORT_SYMBOL_NS_GPL(mntget, ANDROID_GKI_VFS_EXPORT_ONLY);
 
 /**
  * path_is_mountpoint() - Check if path is a mount in the current namespace.
@@ -3000,6 +3001,7 @@ static int do_remount(struct path *path, int ms_flags, int sb_flags,
 	struct super_block *sb = path->mnt->mnt_sb;
 	struct mount *mnt = real_mount(path->mnt);
 	struct fs_context *fc;
+	int retry = 10;
 
 	if (!check_mnt(mnt))
 		return -EINVAL;
@@ -3014,7 +3016,12 @@ static int do_remount(struct path *path, int ms_flags, int sb_flags,
 	if (IS_ERR(fc))
 		return PTR_ERR(fc);
 
+	/*
+	 * Indicate to the filesystem that the remount request is coming
+	 * from the legacy mount system call.
+	 */
 	fc->oldapi = true;
+
 	err = parse_monolithic_mount_data(fc, data);
 	if (!err) {
 		down_write(&sb->s_umount);
@@ -3027,6 +3034,12 @@ static int do_remount(struct path *path, int ms_flags, int sb_flags,
 				unlock_mount_hash();
 			}
 		}
+
+		while (atomic_read(&f2fs_check_pkt_flag) && retry--) {
+			pr_info("%s: wait for end dquot_writback_dquots()!!!!!\n", __func__);
+			mdelay(1);
+		}
+
 		up_write(&sb->s_umount);
 	}
 
@@ -3396,6 +3409,12 @@ static int do_new_mount(struct path *path, const char *fstype, int sb_flags,
 	put_filesystem(type);
 	if (IS_ERR(fc))
 		return PTR_ERR(fc);
+
+	/*
+	 * Indicate to the filesystem that the mount request is coming
+	 * from the legacy mount system call.
+	 */
+	fc->oldapi = true;
 
 	if (subtype)
 		err = vfs_parse_fs_string(fc, "subtype",

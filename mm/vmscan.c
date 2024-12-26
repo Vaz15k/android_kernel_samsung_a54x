@@ -68,6 +68,7 @@
 
 EXPORT_TRACEPOINT_SYMBOL_GPL(mm_vmscan_direct_reclaim_begin);
 EXPORT_TRACEPOINT_SYMBOL_GPL(mm_vmscan_direct_reclaim_end);
+EXPORT_TRACEPOINT_SYMBOL_GPL(mm_vmscan_kswapd_wake);
 
 #undef CREATE_TRACE_POINTS
 #include <trace/hooks/vmscan.h>
@@ -4372,6 +4373,8 @@ restart:
 	smp_store_release(&lrugen->max_seq, lrugen->max_seq + 1);
 
 	spin_unlock_irq(&lruvec->lru_lock);
+
+	trace_android_vh_mglru_new_gen(NULL);
 }
 
 static bool try_to_inc_max_seq(struct lruvec *lruvec, unsigned long max_seq,
@@ -7374,6 +7377,8 @@ kswapd_try_sleep:
 						alloc_order);
 		reclaim_order = balance_pgdat(pgdat, alloc_order,
 						highest_zoneidx);
+		trace_android_vh_vmscan_kswapd_done(pgdat->node_id, highest_zoneidx,
+						alloc_order, reclaim_order);
 		if (reclaim_order < alloc_order)
 			goto kswapd_try_sleep;
 	}

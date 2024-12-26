@@ -56,7 +56,7 @@
 
 		cpu@0 {
 			device_type = "cpu";
-			compatible = "qcom,kryo685";
+			compatible = "arm,cortex-a55";
 			reg = <0x00 0x00>;
 			enable-method = "psci";
 			next-level-cache = <0x02>;
@@ -78,7 +78,7 @@
 
 		cpu@100 {
 			device_type = "cpu";
-			compatible = "qcom,kryo685";
+			compatible = "arm,cortex-a55";
 			reg = <0x00 0x100>;
 			enable-method = "psci";
 			next-level-cache = <0x05>;
@@ -95,7 +95,7 @@
 
 		cpu@200 {
 			device_type = "cpu";
-			compatible = "qcom,kryo685";
+			compatible = "arm,cortex-a55";
 			reg = <0x00 0x200>;
 			enable-method = "psci";
 			next-level-cache = <0x06>;
@@ -112,7 +112,7 @@
 
 		cpu@300 {
 			device_type = "cpu";
-			compatible = "qcom,kryo685";
+			compatible = "arm,cortex-a55";
 			reg = <0x00 0x300>;
 			enable-method = "psci";
 			next-level-cache = <0x07>;
@@ -129,7 +129,7 @@
 
 		cpu@400 {
 			device_type = "cpu";
-			compatible = "qcom,kryo685";
+			compatible = "arm,cortex-a78";
 			reg = <0x00 0x400>;
 			enable-method = "psci";
 			next-level-cache = <0x08>;
@@ -146,7 +146,7 @@
 
 		cpu@500 {
 			device_type = "cpu";
-			compatible = "qcom,kryo685";
+			compatible = "arm,cortex-a78";
 			reg = <0x00 0x500>;
 			enable-method = "psci";
 			next-level-cache = <0x09>;
@@ -163,7 +163,7 @@
 
 		cpu@600 {
 			device_type = "cpu";
-			compatible = "qcom,kryo685";
+			compatible = "arm,cortex-a78";
 			reg = <0x00 0x600>;
 			enable-method = "psci";
 			next-level-cache = <0x0a>;
@@ -180,7 +180,7 @@
 
 		cpu@700 {
 			device_type = "cpu";
-			compatible = "qcom,kryo685";
+			compatible = "arm,cortex-x1";
 			reg = <0x00 0x700>;
 			enable-method = "psci";
 			next-level-cache = <0x0b>;
@@ -851,7 +851,7 @@
 				};
 
 				adc-tm@3400 {
-					compatible = "qcom,adc-tm7";
+					compatible = "qcom,spmi-adc-tm5-gen2";
 					reg = <0x3400>;
 					interrupts = <0x00 0x34 0x00 0x01>;
 					interrupt-names = "threshold";
@@ -1389,6 +1389,8 @@
 			compatible = "qcom,sm8350-cpufreq-epss\0qcom,cpufreq-epss";
 			reg = <0x00 0x18591000 0x00 0x1000 0x00 0x18592000 0x00 0x1000 0x00 0x18593000 0x00 0x1000>;
 			reg-names = "freq-domain0\0freq-domain1\0freq-domain2";
+			interrupts = <0x00 0x1e 0x04 0x00 0x1f 0x04 0x00 0x13 0x04>;
+			interrupt-names = "dcvsh-irq-0\0dcvsh-irq-1\0dcvsh-irq-2";
 			clocks = <0x0f 0x00 0x14 0x23>;
 			clock-names = "xo\0alternate";
 			#freq-domain-cells = <0x01>;

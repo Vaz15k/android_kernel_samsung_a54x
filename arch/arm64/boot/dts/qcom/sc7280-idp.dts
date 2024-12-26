@@ -476,6 +476,7 @@
 			operating-points-v2 = <0x1e>;
 			bus-width = <0x08>;
 			supports-cqe;
+			dma-coherent;
 			qcom,dll-config = <0x7642c>;
 			qcom,ddr-config = <0x80040868>;
 			mmc-ddr-1_8v;
@@ -1217,6 +1218,7 @@
 			power-domains = <0x18 0x00>;
 			operating-points-v2 = <0x56>;
 			bus-width = <0x04>;
+			dma-coherent;
 			qcom,dll-config = <0x7642c>;
 			pinctrl-names = "default\0sleep";
 			pinctrl-0 = <0x57>;
@@ -1319,7 +1321,7 @@
 			clock-names = "cfg_noc\0core\0iface\0mock_utmi\0sleep";
 			assigned-clocks = <0x17 0x93 0x17 0x91>;
 			assigned-clock-rates = <0x124f800 0xbebc200>;
-			interrupts-extended = <0x01 0x00 0xf0 0x04 0x61 0x0d 0x01 0x61 0x0c 0x01>;
+			interrupts-extended = <0x01 0x00 0xf0 0x04 0x61 0x0c 0x03 0x61 0x0d 0x03>;
 			interrupt-names = "hs_phy_irq\0dm_hs_phy_irq\0dp_hs_phy_irq";
 			power-domains = <0x17 0x04>;
 			resets = <0x17 0x0b>;
@@ -1603,7 +1605,7 @@
 				};
 
 				adc-tm@3400 {
-					compatible = "qcom,adc-tm7";
+					compatible = "qcom,spmi-adc-tm5-gen2";
 					reg = <0x3400>;
 					interrupts = <0x00 0x34 0x00 0x01>;
 					interrupt-names = "threshold";
@@ -1830,7 +1832,7 @@
 			compatible = "qcom,apss-wdt-sc7280\0qcom,kpss-wdt";
 			reg = <0x00 0x17c10000 0x00 0x1000>;
 			clocks = <0x16>;
-			interrupts = <0x00 0x00 0x04>;
+			interrupts = <0x00 0x00 0x01>;
 		};
 
 		timer@17c20000 {
@@ -2222,6 +2224,8 @@
 		cpufreq@18591000 {
 			compatible = "qcom,cpufreq-epss";
 			reg = <0x00 0x18591000 0x00 0x1000 0x00 0x18592000 0x00 0x1000 0x00 0x18593000 0x00 0x1000>;
+			interrupts = <0x00 0x1e 0x04 0x00 0x1f 0x04 0x00 0x13 0x04>;
+			interrupt-names = "dcvsh-irq-0\0dcvsh-irq-1\0dcvsh-irq-2";
 			clocks = <0x15 0x00 0x17 0x00>;
 			clock-names = "xo\0alternate";
 			#freq-domain-cells = <0x01>;
