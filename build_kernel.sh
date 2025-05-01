@@ -2,42 +2,35 @@
 DIR=$(readlink -f .)
 PARENT_DIR=$(readlink -f ${DIR}/..)
 
+ARGS="$*"
+
 AK3_DIR="$HOME/AnyKernel3"
 OUT_DIR="$DIR/out"
-
-if [ "$GITHUB_ACTIONS" = "true" ]; then
-    TC_DIR="$HOME/Prebuilts"
-else
-    TC_DIR="$HOME/Projetos/Prebuilts"
-fi
-
-ARGS="$*"
 
 MKBOOTIMG="$DIR/build/mkbootimg/mkbootimg.py"
 MKDTBOIMG="$DIR/build/dtb/mkdtboimg.py"
 
-MOD_OUTDIR="$OUT_DIR/modules_out"
-
 TMPDIR="$DIR/build/tmp"
+DLKM_DIR="$TMPDIR/ramdisk_dlkm"
+PLATFORM_DIR="$TMPDIR/ramdisk_platform"
 
 PRE_PLATFORM="$DIR/build/vboot_platform"
 PRE_DLKM="$DIR/build/vboot_dlkm"
-PLATFORM_DIR="$TMPDIR/ramdisk_platform"
-DLKM_DIR="$TMPDIR/ramdisk_dlkm"
-STOCK_MODULES="$DIR/build/modules_stock"
-
 MODULES_DIR="$DLKM_DIR/lib/modules"
-DTB="$OUT_DIR/arch/arm64/boot/dts/exynos/s5e8835.dtb"
 
+DTB="$OUT_DIR/arch/arm64/boot/dts/exynos/s5e8835.dtb"
+MOD_OUTDIR="$OUT_DIR/modules_out"
 OUT_KERNEL="$OUT_DIR/arch/arm64/boot/Image"
 OUT_DTBIMAGE="$TMPDIR/dtb.img"
 OUT_VENDORBOOTIMG="$TMPDIR/vendor_boot.img"
 
-DEFCONFIG=a54x_defconfig
-JOBS=$(nproc --all)
-MAKE_PARAMS="-j$JOBS -C $DIR CC=clang LLVM=1 LLVM_IAS=1 CLANG_TRIPLE=llvm- CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-"
 
 toolchain() {
+    if [ "$GITHUB_ACTIONS" = "true" ]; then
+        TC_DIR="$HOME/Prebuilts"
+    else
+        TC_DIR="$HOME/Projetos/Prebuilts"
+    fi
 	BT_DIR="$TC_DIR/build-tools"
 	CL_DIR="$TC_DIR/gl-clang/clang-r522817"
 	GAS_DIR="$TC_DIR/gas"
@@ -47,43 +40,78 @@ toolchain() {
 	export PATH=$GAS_DIR/linux-x86:$PATH
 }
 
+zip_name() {
+    if [[ "$ARGS" == *"--permissive"* ]]; then
+        ZIP_NAME="Squeak_PERMISSIVE_$(date +'%Y-%m-%d')"
+
+    elif [[ "$ARGS" == *"--ksu"* ]]; then
+        ZIP_NAME="Squeak_KSU_$(date +'%Y-%m-%d')"
+
+    elif [[ "$ARGS" == *"--next"* ]]; then
+        ZIP_NAME="Squeak_KSU_NEXT_$(date +'%Y-%m-%d')"
+
+    else
+        ZIP_NAME="Squeak_$(date +'%Y-%m-%d')"
+    fi
+}
+
+permissive() {
+    if [[ "$ARGS" == *"--permissive"* ]]; then
+        scripts/config --file $DIR/arch/arm64/configs/a54x_defconfig \
+            -e CONFIG_PERMISSIVE_SELINUX \
+            -e CONFIG_MODULE_FORCE_UNLOAD \
+            -e CONFIG_MODULE_LOAD \
+            -e CONFIG_MODULE_FORCE_LOAD \
+            -d CONFIG_INTEGRITY \
+            -d CONFIG_INTEGRITY_SIGNATURE \
+            -d CONFIG_INTEGRITY_ASYMMETRIC_KEYS \
+            -d CONFIG_INTEGRITY_TRUSTED_KEYRING \
+            -d CONFIG_INTEGRITY_AUDIT \
+            --set-str CONFIG_LOCALVERSION "-squeak_permissive"
+        
+        echo "Building permissive kernel"
+    fi
+}
+
 ksu() {
     if [[ "$ARGS" == *"--ksu"* ]]; then
-        KSU="true"
-        CONFIG_KSU=y
-        ZIP_NAME="Squeak_KSU_"$(date +'%Y-%m-%d')""
-    elif [[ "$ARGS" == *"--next"* ]]; then
-        KSU_NEXT="true"
-        CONFIG_KSU=y
-        ZIP_NAME="Squeak_KSU_NEXT_"$(date +'%Y-%m-%d')""
-    else
-        KSU="false"
-        ZIP_NAME="Squeak_"$(date +'%Y-%m-%d')""
-    fi
+        if [ -d "build/tmp" ]; then
+            rm -fr build/tmp $OUT_DIR
+        fi
 
-    if [ "$KSU" == "true" ]; then
-		rm -fr build/temp $OUT_DIR
-        if [ -d "KernelSU" ]; then
-            echo "KernelSU exists"
-        else
+        if [ ! -d "KernelSU" ]; then
             echo "KernelSU not found !"
             echo "Fetching ...."
             curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
         fi
-    elif [ "$KSU_NEXT" == "true" ]; then
-		rm -fr build/temp $OUT_DIR
-        if [ -d "KernelSU" ]; then
-            echo "KernelSU Next exists"
-        else
+
+        scripts/config --file $DIR/arch/arm64/configs/a54x_defconfig \
+            -e CONFIG_KSU \
+            --set-str CONFIG_LOCALVERSION "-squeak_ksu"
+
+        echo "Building Kernel with KernelSU"
+
+    elif [[ "$ARGS" == *"--next"* ]]; then
+        if [ -d "build/tmp" ]; then
+            rm -fr build/temp $OUT_DIR
+        fi
+
+        if [ ! -d "KernelSU" ]; then
             echo "KernelSU-Next not found !"
             echo "Fetching ...."
             curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -
         fi
+
+        scripts/config --file $DIR/arch/arm64/configs/a54x_defconfig \
+            -e CONFIG_KSU \
+            --set-str CONFIG_LOCALVERSION "-squeak_next"
+
+        echo "Building Kernel with KernelSU-Next"
+
     else
         echo "KSU disabled"
         if [ -d "KernelSU" ]; then
-            rm -rf drivers/kernelsu
-            rm -rf KernelSU
+            rm -rf drivers/kernelsu KernelSU build/tmp
             git reset HEAD --hard
         fi
     fi
@@ -93,11 +121,11 @@ anykernel3() {
 	if [ -d $AK3_DIR ]; then
 		cd $AK3_DIR
 		git reset HEAD --hard
-		rm -fr Squeak* Image vendor_boot.img
+		git clean -xdf
 		cd $DIR
-	else 
-	    git clone --branch a54x https://github.com/Vaz15k/AnyKernel3.git $AK3_DIR
-	    cd $DIR
+	else
+        git clone --branch a54x https://github.com/Vaz15k/AnyKernel3.git $AK3_DIR
+        cd $DIR
 	fi
 }
 
@@ -144,8 +172,8 @@ copy_modules() {
     cd "$MODULES_DIR/0.0"
     for i in $(find . -name "modules.*" -type f); do
         if [ $(basename "$i") != "modules.dep" ] && \
-           [ $(basename "$i") != "modules.softdep" ] && \
-           [ $(basename "$i") != "modules.alias" ]; then
+            [ $(basename "$i") != "modules.softdep" ] && \
+            [ $(basename "$i") != "modules.alias" ]; then
             rm -f "$i"
         fi
     done
@@ -194,13 +222,25 @@ build_boot_images() {
     echo "INFO: Build das imagens concluído!"
 }
 
+DEFCONFIG=a54x_defconfig
+JOBS=$(nproc --all)
+MAKE_PARAMS="-j$JOBS -C $DIR CC=clang LLVM=1 LLVM_IAS=1 CLANG_TRIPLE=llvm- CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-"
+
 export DEPMOD=depmod
 
+export KBUILD_BUILD_USER="Vaz15K"
+export KBUILD_BUILD_HOST="GithubActions"
+
 echo "Starting Building ..."
-ksu
+
 toolchain
+zip_name
+permissive
+ksu
+
 make $MAKE_PARAMS $DEFCONFIG
 make $MAKE_PARAMS
+
 if [[ ! -f "$OUT_KERNEL" ]]; then
     echo "Build failed"
 else
