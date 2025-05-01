@@ -2,6 +2,12 @@ name: Build Test Kernel
 
 on:
   workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Flags de compilação personalizadas'
+        required: false
+        default: ''
+        type: string
 
 jobs:
   build_test:
@@ -41,7 +47,7 @@ jobs:
 
       - name: Build Kernel Clean
         run: |
-          ./build_kernel.sh
+          ./build_kernel.sh VERSION="${{ github.event.inputs.build_type }}"
           cp ~/AnyKernel3/Squeak* ~/files
 
       - name: Upload Test Build
