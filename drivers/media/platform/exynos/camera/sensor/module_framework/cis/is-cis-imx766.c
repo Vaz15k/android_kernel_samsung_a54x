@@ -83,7 +83,7 @@ int sensor_imx766_cis_QuadSensCal_write(struct v4l2_subdev *subdev)
 
 	int position;
 	ulong cal_addr;
-	u8 cal_data[IMX766_QSC_SIZE] = {0, };
+	u8 *cal_data = NULL;
 	char *rom_cal_buf = NULL;
 	ktime_t st = ktime_get();
 
@@ -104,6 +104,13 @@ int sensor_imx766_cis_QuadSensCal_write(struct v4l2_subdev *subdev)
 		goto p_err;
 	}
 
+	cal_data = kzalloc(IMX766_QSC_SIZE, GFP_KERNEL);
+	if (!cal_data) {
+		err("failed to allocate memory for cal_data");
+		ret = -ENOMEM;
+		goto p_err;
+	}
+
 	memcpy(cal_data, (u16 *)cal_addr, IMX766_QSC_SIZE);
 
 	ret = cis->ixc_ops->write8_sequential(cis->client, IMX766_QSC_ADDR, cal_data, IMX766_QSC_SIZE);
@@ -115,6 +122,7 @@ int sensor_imx766_cis_QuadSensCal_write(struct v4l2_subdev *subdev)
 	if (IS_ENABLED(DEBUG_SENSOR_TIME))
 		dbg_sensor(1, "[%s] time %ldus", __func__, PABLO_KTIME_US_DELTA_NOW(st));
 
+	kfree(cal_data);
 p_err:
 	return ret;
 }

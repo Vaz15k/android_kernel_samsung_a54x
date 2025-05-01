@@ -157,16 +157,24 @@ static void cipc_func_handle_irq(int evt, void *priv)
 	case CIPC_REG_DATA_CHUB2AP:
 		{
 			int size = 0;
-			char rx_buf[PACKET_SIZE_MAX] = {0,};
+			char *rx_buf = NULL;
 			void *raw_rx_buf = 0;
 			struct contexthub_ipc_data packet;
 
 			raw_rx_buf = cipc_read_data(CIPC_REG_DATA_CHUB2AP, &size);
 			if (size > 0 && raw_rx_buf) {
+				rx_buf = kmalloc(PACKET_SIZE_MAX, GFP_KERNEL);
+				if (!rx_buf) {
+					nanohub_dev_err(chub->dev, "%s: failed to allocate rx_buf\n", __func__);
+					break;
+				}
+				
 				memcpy_fromio(rx_buf, (void *)raw_rx_buf, size);
 				packet.size = size;
 				packet.data = rx_buf;
 				contexthub_ipc_notifier_call(CHUB_IPC_CHUB2AP, &packet);
+				
+				kfree(rx_buf);
 			}
 			break;
 		}
