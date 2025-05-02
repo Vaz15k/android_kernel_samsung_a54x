@@ -10,16 +10,16 @@ OUT_DIR="$DIR/out"
 MKBOOTIMG="$DIR/build/mkbootimg/mkbootimg.py"
 MKDTBOIMG="$DIR/build/dtb/mkdtboimg.py"
 
-TMPDIR="$DIR/build/tmp"
-DLKM_DIR="$TMPDIR/ramdisk_dlkm"
-PLATFORM_DIR="$TMPDIR/ramdisk_platform"
+TMPDIR="$OUT_DIR/tmp"
+BUILD_DLKM="$TMPDIR/ramdisk_dlkm"
+BUILD_PLATFORM="$TMPDIR/ramdisk_platform"
+BUILD_MODULES="$BUILD_DLKM/lib/modules"
 
 PRE_PLATFORM="$DIR/build/vboot_platform"
 PRE_DLKM="$DIR/build/vboot_dlkm"
-MODULES_DIR="$DLKM_DIR/lib/modules"
 
 DTB="$OUT_DIR/arch/arm64/boot/dts/exynos/s5e8835.dtb"
-MOD_OUTDIR="$OUT_DIR/modules_out"
+MOD_OUTDIR="$TMPDIR/modules_out"
 OUT_KERNEL="$OUT_DIR/arch/arm64/boot/Image"
 OUT_DTBIMAGE="$TMPDIR/dtb.img"
 OUT_VENDORBOOTIMG="$TMPDIR/vendor_boot.img"
@@ -40,15 +40,29 @@ toolchain() {
 	export PATH=$GAS_DIR/linux-x86:$PATH
 }
 
+clear_build() {
+    if [ -d "$OUT_DIR" ]; then
+        rm -rf "$OUT_DIR"
+    fi
+}
+
 zip_name() {
     if [[ "$ARGS" == *"--permissive"* ]]; then
         ZIP_NAME="Squeak_PERMISSIVE_$(date +'%Y-%m-%d')"
 
     elif [[ "$ARGS" == *"--ksu"* ]]; then
-        ZIP_NAME="Squeak_KSU_$(date +'%Y-%m-%d')"
+        if [[ "$ARGS" == *"--susfs"* ]]; then
+            ZIP_NAME="Squeak_KSU_SUSFS_$(date +'%Y-%m-%d')"
+        else
+            ZIP_NAME="Squeak_KSU_$(date +'%Y-%m-%d')"
+        fi
 
     elif [[ "$ARGS" == *"--next"* ]]; then
-        ZIP_NAME="Squeak_KSU_NEXT_$(date +'%Y-%m-%d')"
+        if [[ "$ARGS" == *"--susfs"* ]]; then
+            ZIP_NAME="Squeak_KSU_NEXT_SUSFS_$(date +'%Y-%m-%d')"
+        else
+            ZIP_NAME="Squeak_KSU_NEXT_$(date +'%Y-%m-%d')"
+        fi
 
     else
         ZIP_NAME="Squeak_$(date +'%Y-%m-%d')"
@@ -75,39 +89,53 @@ permissive() {
 
 ksu() {
     if [[ "$ARGS" == *"--ksu"* ]]; then
-        if [ -d "build/tmp" ]; then
-            rm -fr build/tmp $OUT_DIR
+        if [[ "$ARGS" == *"--susfs"* ]]; then
+            echo "KernelSU with SUSFS"
+            if [ ! -d "KernelSU" ]; then
+                echo "KernelSU not found !"
+                echo "Fetching ...."
+                curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s susfs-v1.5.7
+            fi
+            scripts/config --file $DIR/arch/arm64/configs/a54x_defconfig \
+                -e CONFIG_KSU \
+                -e CONFIG_KSU_SUSFS \
+                --set-str CONFIG_LOCALVERSION "-squeak_ksu_sus"
+        else
+            echo "KernelSU without SUSFS"
+            if [ ! -d "KernelSU" ]; then
+                echo "KernelSU not found !"
+                echo "Fetching ...."
+                curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+            fi
+            scripts/config --file $DIR/arch/arm64/configs/a54x_defconfig \
+                -e CONFIG_KSU \
+                --set-str CONFIG_LOCALVERSION "-squeak_ksu"
         fi
-
-        if [ ! -d "KernelSU" ]; then
-            echo "KernelSU not found !"
-            echo "Fetching ...."
-            curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        fi
-
-        scripts/config --file $DIR/arch/arm64/configs/a54x_defconfig \
-            -e CONFIG_KSU \
-            --set-str CONFIG_LOCALVERSION "-squeak_ksu"
-
         echo "Building Kernel with KernelSU"
-
     elif [[ "$ARGS" == *"--next"* ]]; then
-        if [ -d "build/tmp" ]; then
-            rm -fr build/temp $OUT_DIR
+        if [[ "$ARGS" == *"--susfs"* ]]; then
+            echo "KernelSU-Next with SUSFS"
+            if [ ! -d "KernelSU" ]; then
+                echo "KernelSU Next not found !"
+                echo "Fetching ...."
+                curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next-susfs/kernel/setup.sh" | bash -s next-susfs-dev
+            fi
+            scripts/config --file $DIR/arch/arm64/configs/a54x_defconfig \
+                -e CONFIG_KSU \
+                -e CONFIG_KSU_SUSFS \
+                --set-str CONFIG_LOCALVERSION "-squeak_next_sus"
+        else
+            echo "KernelSU-Next without SUSFS"
+            if [ ! -d "KernelSU" ]; then
+                echo "KernelSU Next not found !"
+                echo "Fetching ...."
+                curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -
+            fi
+            scripts/config --file $DIR/arch/arm64/configs/a54x_defconfig \
+                -e CONFIG_KSU \
+                --set-str CONFIG_LOCALVERSION "-squeak_next"
         fi
-
-        if [ ! -d "KernelSU" ]; then
-            echo "KernelSU-Next not found !"
-            echo "Fetching ...."
-            curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -
-        fi
-
-        scripts/config --file $DIR/arch/arm64/configs/a54x_defconfig \
-            -e CONFIG_KSU \
-            --set-str CONFIG_LOCALVERSION "-squeak_next"
-
         echo "Building Kernel with KernelSU-Next"
-
     else
         echo "KSU disabled"
         if [ -d "KernelSU" ]; then
@@ -138,24 +166,26 @@ makezipfile() {
 
 copy_modules() {
     echo "INFO: Copiando módulos..."
-    rm -rf "$TMPDIR"
-    mkdir -p "$TMPDIR" "$MODULES_DIR/0.0" "$DLKM_DIR" "$PLATFORM_DIR"
+    if [ -d "$BUILD_MODULES" ]; then
+        rm -rf "$BUILD_MODULES"
+    fi
+    mkdir -p "$BUILD_DLKM" "$BUILD_PLATFORM" "$BUILD_MODULES/0.0"
     
     if ! find "$MOD_OUTDIR/lib/modules" -mindepth 1 -type d | read; then
         echo -e "\nERROR: Nenhum módulo encontrado!\n"
         exit 1
     fi
 
-    cp "$OUT_DIR/modules.order" "$MODULES_DIR/0.0/"
-    cp "$OUT_DIR/modules.builtin" "$MODULES_DIR/0.0/"
-    cp "$OUT_DIR/modules.builtin.modinfo" "$MODULES_DIR/0.0/"
+    cp "$OUT_DIR/modules.order" "$BUILD_MODULES/0.0/"
+    cp "$OUT_DIR/modules.builtin" "$BUILD_MODULES/0.0/"
+    cp "$OUT_DIR/modules.builtin.modinfo" "$BUILD_MODULES/0.0/"
 
     missing_modules=""
 
     for module in $(cat "$PRE_DLKM/modules.load"); do
         module_path=$(find "$MOD_OUTDIR/lib/modules" -name $module)
         if [ -f "$module_path" ]; then
-            cp -f "$module_path" "$MODULES_DIR/0.0/$module"
+            cp -f "$module_path" "$BUILD_MODULES/0.0/$module"
         else
             missing_modules="$missing_modules $module"
         fi
@@ -165,11 +195,11 @@ copy_modules() {
         echo "ERROR: Os seguintes módulos não foram encontrados: $missing_modules"
     fi
 
-    depmod 0.0 -b "$DLKM_DIR"
+    depmod 0.0 -b "$BUILD_DLKM"
     
-    sed -i 's/\([^ ]\+\)/\/lib\/modules\/\1/g' "$MODULES_DIR/0.0/modules.dep"
+    sed -i 's/\([^ ]\+\)/\/lib\/modules\/\1/g' "$BUILD_MODULES/0.0/modules.dep"
     
-    cd "$MODULES_DIR/0.0"
+    cd "$BUILD_MODULES/0.0"
     for i in $(find . -name "modules.*" -type f); do
         if [ $(basename "$i") != "modules.dep" ] && \
             [ $(basename "$i") != "modules.softdep" ] && \
@@ -179,26 +209,26 @@ copy_modules() {
     done
     cd "$DIR"
 
-    cp -f "$PRE_DLKM/modules.load" "$MODULES_DIR/0.0/modules.load"
+    cp -f "$PRE_DLKM/modules.load" "$BUILD_MODULES/0.0/modules.load"
     
-    mv "$MODULES_DIR/0.0"/* "$MODULES_DIR/"
-    rm -rf "$MODULES_DIR/0.0"
+    mv "$BUILD_MODULES/0.0"/* "$BUILD_MODULES/"
+    rm -rf "$BUILD_MODULES/0.0"
 
     echo "INFO: Módulos copiados com sucesso!"
 }
 
 build_boot_images() {
     # Prepara ramdisk platform
-    cp -rf "$PRE_PLATFORM"/* "$PLATFORM_DIR/"
+    cp -rf "$PRE_PLATFORM"/* "$BUILD_PLATFORM/"
 
     # Build DTB
     echo "INFO: Gerando DTB image..."
     python "$MKDTBOIMG" create "$OUT_DTBIMAGE" --custom0=0x00000000 --custom1=0x000000ff  --version=0 --page_size=2048 "$DTB"
 
     # Prepara ramdisks para vendor_boot
-    cd "$DLKM_DIR"
+    cd "$BUILD_DLKM"
     find . | cpio --quiet -o -H newc -R root:root | lz4 -9cl > ../ramdisk_dlkm.lz4
-    cd ../ramdisk_platform
+    cd "$BUILD_PLATFORM"
     find . | cpio --quiet -o -H newc -R root:root | lz4 -9cl > ../ramdisk_platform.lz4
     cd ..
     echo "buildtime_bootconfig=enable" > bootconfig
@@ -216,7 +246,7 @@ build_boot_images() {
         --ramdisk_name dlkm \
         --vendor_ramdisk_fragment "$TMPDIR/ramdisk_dlkm.lz4" \
         --os_version 13.0.0 \
-        --os_patch_level 2024-12 || exit 1
+        --os_patch_level 2025-04 || exit 1
 
     cd "$DIR"
     echo "INFO: Build das imagens concluído!"
@@ -238,12 +268,20 @@ zip_name
 permissive
 ksu
 
+if [[ "$ARGS" == *"--clean"* ]]; then
+    clear_build
+    echo "INFO: Limpeza concluída!"
+fi
+
 make $MAKE_PARAMS $DEFCONFIG
 make $MAKE_PARAMS
 
 if [[ ! -f "$OUT_KERNEL" ]]; then
     echo "Build failed"
 else
+    if [ -d "$TMPDIR" ]; then
+        rm -rf "$TMPDIR"
+    fi
     make $MAKE_PARAMS INSTALL_MOD_STRIP="--strip-debug --keep-section=.ARM.attributes" INSTALL_MOD_PATH="$MOD_OUTDIR" modules_install
     copy_modules
     build_boot_images

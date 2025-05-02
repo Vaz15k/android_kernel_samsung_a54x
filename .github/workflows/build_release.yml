@@ -124,21 +124,28 @@ jobs:
         if: matrix.target == 'SM-A546B'
         run: |
           rm -rf ~/mkboot
-          ./build_kernel.sh --ksu
+          ./build_kernel.sh --ksu --clean
           cp ~/AnyKernel3/Squeak* ~/files
       
       - name: Build Kernel With KSU-NEXT
         if: matrix.target == 'SM-A546E'
         run: |
           rm -rf ~/mkboot
-          ./build_kernel.sh --next
+          ./build_kernel.sh --next --susfs --clean
           cp ~/AnyKernel3/Squeak* ~/files
       
       - name: Build Permissive Kernel
         if: matrix.target == 'SM-A546S'
         run: |
           rm -rf ~/mkboot
-          ./build_kernel.sh --permissive
+          ./build_kernel.sh --permissive --clean
+          cp ~/AnyKernel3/Squeak* ~/files
+
+      - name: Build Kernel With KSU SUS
+        if: matrix.target == 'SM-A5460'
+        run: |
+          rm -rf ~/mkboot
+          ./build_kernel.sh --ksu --susfs --clean
           cp ~/AnyKernel3/Squeak* ~/files
       
       - name: Publish to GitHub
