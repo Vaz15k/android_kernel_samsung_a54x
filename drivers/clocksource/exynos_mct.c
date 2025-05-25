@@ -433,16 +433,7 @@ static irqreturn_t exynos4_mct_tick_isr(int irq, void *dev_id)
 	struct mct_clock_event_device *mevt = dev_id;
 	struct clock_event_device *evt = &mevt->evt;
 
-	/*
-	 * This is for supporting oneshot mode.
-	 * Mct would generate interrupt periodically
-	 * without explicit stopping.
-	 */
-	if (!clockevent_state_periodic(&mevt->evt))
-		exynos4_mct_tick_stop(mevt);
-
 	exynos4_mct_tick_clear(mevt);
-
 	evt->event_handler(evt);
 
 	return IRQ_HANDLED;
