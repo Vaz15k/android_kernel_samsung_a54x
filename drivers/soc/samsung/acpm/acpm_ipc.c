@@ -35,7 +35,7 @@ static struct acpm_ipc_info *acpm_ipc = NULL;
 static struct acpm_ipc_info *esca_ipc = NULL;
 static struct workqueue_struct *update_log_wq;
 static struct acpm_debug_info *acpm_debug = NULL;
-static bool is_acpm_stop_log = false;
+static bool is_acpm_stop_log = true;
 static bool is_acpm_ramdump = false;
 static bool acpm_stop_log_req = false;
 static u32 acpm_period = APM_PERITIMER_NS_PERIOD;
