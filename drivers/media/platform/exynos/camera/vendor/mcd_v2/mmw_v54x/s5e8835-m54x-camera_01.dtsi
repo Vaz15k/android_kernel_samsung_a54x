@@ -292,6 +292,52 @@
 				};
 			};
 
+			dphy_setfile_m54x_imx616: dphy-setfile-m54x-imx616@00 {
+				comm {
+					/* bias */
+					0  = <0x1000 0 32 0x00000010 IDX_BIA_VAL 0>; /* M_BIAS_CON0 */
+					1  = <0x1004 0 32 0x00000110 IDX_BIA_VAL 0>; /* M_BIAS_CON1 */
+					2  = <0x1008 0 32 0x00003223 IDX_BIA_VAL 0>; /* M_BIAS_CON2 */
+					3  = <0x1010 0 32 0x00000200 IDX_BIA_VAL 0>; /* M_BIAS_CON4 */
+					4  = <0x1114 0 32 0x00000500 IDX_BIA_VAL 0>; /* M_PLL_CON5 */
+					5  = <0x1118 0 32 0x00000000 IDX_BIA_VAL 0>; /* M_PLL_CON6 */
+					6  = <0x111C 0 32 0x000028A0 IDX_BIA_VAL 0>; /* M_PLL_CON7 */
+					7  = <0x1120 0 32 0x00001450 IDX_BIA_VAL 0>; /* M_PLL_CON8 */
+					8  = <0x1124 0 32 0x00001208 IDX_BIA_VAL 0>; /* M_PLL_CON9 */
+
+					/* Clock lane */
+					9 = <0x0004 0 32 0x000028A0 IDX_FIX_VAL 0>; /* SC_GNR_CON1 */
+					10 = <0x0008 0 32 0x00000001 IDX_FIX_VAL 0>; /* SC_ANA_CON0 */
+					11 = <0x000C 0 32 0x0000E840 IDX_FIX_VAL 0>; /* SC_ANA_CON1 */
+					12 = <0x0010 0 32 0x00000002 IDX_FIX_VAL 0>; /* SC_ANA_CON2 */
+					13 = <0x0014 0 32 0x00008600 IDX_FIX_VAL 0>; /* SC_ANA_CON3 */
+					14 = <0x0018 0 32 0x00004000 IDX_FIX_VAL 0>; /* SC_ANA_CON4 */
+					15 = <0x0030 0 32 0x00000308 IDX_FIX_VAL 0>; /* SC_TIME_CON0 */
+					16 = <0x0040 0 32 0x00000000 IDX_FIX_VAL 0>; /* SC_DATA_CON0 */
+
+					/* Enable should be set at last */
+					17 = <0x0000 0 32 0x00000001 IDX_FIX_VAL 0>; /* SC_GNR_CON0 */
+				};
+
+				lane {
+					0  = <0x0004 0 32 0x000028A0 IDX_FIX_VAL 4>; /* SD_GNR_CON1 */
+					1  = <0x0008 0 32 0x00000001 IDX_FIX_VAL 4>; /* SD_ANA_CON0 */
+					2  = <0x000C 0 32 0x0000E840 IDX_FIX_VAL 4>; /* SD_ANA_CON1 */
+					3  = <0x0010 0 32 0x00000002 IDX_FIX_VAL 4>; /* SD_ANA_CON2 */
+					4  = <0x0010 8  2 0x00000000 IDX_SKW_DLY 4>; /* SD_ANA_CON2 */
+					5  = <0x0014 0 32 0x00008600 IDX_FIX_VAL 4>; /* SD_ANA_CON3 */
+					6  = <0x0018 0 32 0x00004000 IDX_FIX_VAL 4>; /* SD_ANA_CON4 */
+					7  = <0x0030 0  8 0x00000000 IDX_STL_VAL 4>; /* SD_TIME_CON0 */
+					8  = <0x0030 8  1 0x00000000 IDX_STL_CLK 4>; /* SD_TIME_CON0 */
+					9  = <0x0034 0 32 0x00000003 IDX_FIX_VAL 4>; /* SD_TIME_CON1 */
+					10 = <0x0040 0  1 0x00000001 IDX_SKW_CAL 4>; /* SD_DESKEW_CON0 */
+					11 = <0x0050 0 32 0x0000081A IDX_FIX_VAL 4>; /* SD_DESKEW_CON4 */
+
+					/* Enable should be set at last */
+					12 = <0x0000 0 32 0x00000001 IDX_FIX_VAL 4>;/* SD_GNR_CON0 */
+				};
+			};
+
 			/* Wide CAMERA */
 			is_sensor0: is_sensor0@15030000 {
 				#address-cells = <1>;
@@ -324,7 +370,7 @@
 				interrupts = <0 INTREQ__CSIS2 IRQ_TYPE_LEVEL_HIGH>; /* MIPI-CSI2 */
 				interrupt-names = "csi";
 				phys = <&mipi_phy_csis2_m0s4s4s4s4_s22 0>;
-				phy_setfile = <&dphy_setfile>;
+				phy_setfile = <&dphy_setfile_m54x_imx616>;
 				phy_tune_default_mode = "3264 2448 30";
 			};
 

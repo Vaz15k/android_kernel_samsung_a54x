@@ -27,9 +27,9 @@ static unsigned short sep_to_aw8622x_index_mapping[128] = {
 	/* 21 */	20,  /* RTP15_RTP.bin       */
 	/* 22 */	21,  /* RTP16_RTP.bin       */
 	/* 23 */	22,  /* RTP17_RTP.bin       */
-	/* 24 */	1,   /* aw8622x_haptic.bin  */
+	/* 24 */	115, /* RTP110_RTP.bin  */
 	/* 25 */	23,  /* RESERVED_RTP.bin    */
-	/* 26 */	1,   /* aw8622x_haptic.bin  */
+	/* 26 */	116, /* RTP111_RTP.bin  */
 	/* 27 */	24,  /* RTP19_RTP.bin       */
 	/* 28 */	25,  /* RESERVED_RTP.bin    */
 	/* 29 */	26,  /* RESERVED_RTP.bin    */
@@ -39,7 +39,7 @@ static unsigned short sep_to_aw8622x_index_mapping[128] = {
 	/* 33 */	1,   /* aw8622x_haptic.bin  */
 	/* 34 */	30,  /* RTP25_RTP.bin       */
 	/* 35 */	31,  /* RESERVED_RTP.bin    */
-	/* 36 */	32,  /* RESERVED_RTP.bin    */
+	/* 36 */	32,  /* RTP27_RTP.bin    */
 	/* 37 */	1,   /* aw8622x_haptic.bin  */
 	/* 38 */	1,   /* aw8622x_haptic.bin  */
 	/* 39 */	33,  /* RTP28_RTP.bin       */
@@ -56,9 +56,9 @@ static unsigned short sep_to_aw8622x_index_mapping[128] = {
 	/* 50 */	39,  /* RTP34_RTP.bin       */
 	/* 51 */	4,   /* aw8622x_haptic.bin  */
 	/* 52 */	40,  /* RTP35_RTP.bin       */
-	/* 53 */	41,  /* RESERVED_RTP.bin    */
-	/* 54 */	42,  /* RESERVED_RTP.bin    */
-	/* 55 */	43,  /* RESERVED_RTP.bin    */
+	/* 53 */	41,  /* RTP36_RTP.bin    */
+	/* 54 */	42,  /* RTP37_RTP.bin    */
+	/* 55 */	43,  /* RTP38_RTP.bin    */
 	/* 56 */	44,  /* RTP39_RTP.bin       */
 	/* 57 */	45,  /* RTP40_RTP.bin       */
 	/* 58 */	46,  /* RTP41_RTP.bin       */

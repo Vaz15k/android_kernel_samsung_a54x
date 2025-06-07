@@ -115,6 +115,7 @@
 #define SLSI_WIFI_ROAMING_SEARCH_REASON_IDLE                  6
 #define SLSI_WIFI_ROAMING_SEARCH_REASON_WTC                   7
 #define SLSI_WIFI_ROAMING_SEARCH_REASON_BT_COEX               8
+
 #define SLSI_WIFI_RTT_RESULT_MAX_ENTRY	8
 #define SLSI_WIFI_RTT_RESULT_ID		0xdd
 #define SLSI_WIFI_RTT_RESULT_LENGTH	0x30
@@ -348,6 +349,9 @@ enum lls_attribute {
 	LLS_ATTRIBUTE_SET_AGGR_STATISTICS_GATHERING,
 	LLS_ATTRIBUTE_CLEAR_STOP_REQUEST_MASK,
 	LLS_ATTRIBUTE_CLEAR_STOP_REQUEST,
+	LLS_ATTRIBUTE_STATS_VERSION,
+	LLS_ATTRIBUTE_GET_STATS_TYPE,
+	LLS_ATTRIBUTE_GET_STATS_STRUCT,
 	LLS_ATTRIBUTE_MAX
 };
 
@@ -1201,6 +1205,7 @@ static inline enum slsi_lls_traffic_ac slsi_fapi_to_android_traffic_q(enum slsi_
 void slsi_tas_notify_wifi_status(bool enabled);
 int slsi_tas_notify_sar_ind(struct slsi_dev *sdev, struct net_device *dev, struct sk_buff *skb);
 int slsi_tas_notify_sar_limit_upper(struct slsi_dev *sdev, struct net_device *dev, struct sk_buff *skb);
+int slsi_tas_notify_sar_target(struct slsi_dev *sdev, struct net_device *dev, struct sk_buff *skb);
 void slsi_tas_nl_init(void);
 void slsi_tas_nl_deinit(void);
 #endif

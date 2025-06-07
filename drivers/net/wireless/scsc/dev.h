@@ -1495,6 +1495,7 @@ struct slsi_tas_info {
 	struct tas_sar_param previous_sar_param;
 	u16 sar_limit_upper;
 	u16 sar_compliance;
+	u8 sar_method;
 	bool if_enabled[SLSI_TAS_IF_TYPE_MAX];
 };
 #endif
@@ -1560,7 +1561,7 @@ struct slsi_dev {
 	struct scsc_service        *service;
 	struct slsi_chip_info_mib  chip_info_mib;
 	struct slsi_plat_info_mib  plat_info_mib;
-	u16                        reg_dom_version;
+	u32                        reg_dom_version;
 
 #ifdef CONFIG_SCSC_WLAN_MUTEX_DEBUG
 	struct slsi_mutex          netdev_add_remove_mutex;
@@ -1608,6 +1609,12 @@ struct slsi_dev {
 	/* ProcFS */
 	int                        procfs_instance;
 	struct proc_dir_entry      *procfs_dir;
+#ifdef CONFIG_SCSC_WLAN_MUTEX_DEBUG
+	struct slsi_mutex          tspec_mutex;
+#else
+	/* a std mutex */
+	struct mutex               tspec_mutex;
+#endif
 
 	/* Configuration */
 	u8                         hw_addr[ETH_ALEN];

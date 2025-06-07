@@ -198,6 +198,8 @@ struct decon_vendor_pps {
 	unsigned int nfl_bpg_offset;
 	unsigned int slice_bpg_offset;
 	unsigned int comp_cfg;
+	unsigned int rc_range_parameters;
+	unsigned int rc_range_parameters_1;
 };
 
 #if IS_ENABLED(CONFIG_DRM_MCD_COMMON)
@@ -281,6 +283,7 @@ struct decon_dsc {
 	unsigned int initial_offset;
 	unsigned int final_offset;
 	unsigned int rc_range_parameters;
+	unsigned int rc_range_parameters_1;
 	unsigned int overlap_w;
 	unsigned int width_per_enc;
 	unsigned char *dec_pps_t;

@@ -7249,19 +7249,14 @@ release:
 static int ufshcd_host_reset_and_restore(struct ufs_hba *hba)
 {
 	int err;
-	u32 reg;
 
 	/*
 	 * Stop the host controller and complete the requests
 	 * cleared by h/w
 	 */
-	reg = ufshcd_readl(hba, REG_UTP_TRANSFER_REQ_DOOR_BELL);
-	pr_info("%s, %u: dbg = 0x%08x", __func__, __LINE__, reg);
 	ufshpb_reset_host(hba);
 	ufshcd_hba_stop(hba);
-	pr_info("%s, %u: dbg = 0x%08x", __func__, __LINE__, reg);
 	hba->silence_err_logs = true;
-	reg = ufshcd_readl(hba, REG_UTP_TRANSFER_REQ_DOOR_BELL);
 	ufshcd_retry_aborted_requests(hba);
 	hba->silence_err_logs = false;
 

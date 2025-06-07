@@ -1476,11 +1476,11 @@ int slsi_tx_done(struct slsi_dev *sdev, u32 colour, bool more)
 
 	rcu_read_lock();
 	read_lock(&txbp_priv.vif_lock);
+	write_lock(&txbp_priv.cod_lock);
+	txbp_priv.cod--;
 	if (!colour && !more) {
-		write_lock(&txbp_priv.cod_lock);
 		list_for_each_entry(tx_priv, &txbp_priv.vif_list, list) {
 			for (ac = 0 ; ac < AC_CATEGORIES ; ac++) {
-				txbp_priv.cod -= tx_priv->ac_completed[ac];
 				bp_cod[0] -= tx_priv->ac_completed[ac];
 				bp_cod[ac + 1] -= tx_priv->ac_completed[ac];
 
@@ -1508,22 +1508,22 @@ int slsi_tx_done(struct slsi_dev *sdev, u32 colour, bool more)
 		tx_priv = (struct tx_netdev_data *)ndev_vif->tx_netdev_data;
 		if (!tx_priv) {
 			SLSI_NET_WARN(dev, "tx_priv Null\n");
+			write_unlock(&txbp_priv.cod_lock);
 			read_unlock(&txbp_priv.vif_lock);
 			rcu_read_unlock();
 			return 0;
 		}
 		tx_priv->ac_completed[ac]++;
 	} else {
+		write_unlock(&txbp_priv.cod_lock);
 		read_unlock(&txbp_priv.vif_lock);
 		rcu_read_unlock();
 		return -ENODEV;
 	}
 
 	if (!more) {
-		write_lock(&txbp_priv.cod_lock);
 		list_for_each_entry(tx_priv, &txbp_priv.vif_list, list) {
 			for (ac = 0 ; ac < AC_CATEGORIES ; ac++) {
-				txbp_priv.cod -= tx_priv->ac_completed[ac];
 				bp_cod[0] -= tx_priv->ac_completed[ac];
 				bp_cod[ac + 1] -= tx_priv->ac_completed[ac];
 
@@ -1537,6 +1537,8 @@ int slsi_tx_done(struct slsi_dev *sdev, u32 colour, bool more)
 			show_cod(tx_priv);
 			slsi_txbp_schedule_napi(tx_priv->tx.ndev, tx_priv);
 		}
+	} else {
+		write_unlock(&txbp_priv.cod_lock);
 	}
 	read_unlock(&txbp_priv.vif_lock);
 	rcu_read_unlock();

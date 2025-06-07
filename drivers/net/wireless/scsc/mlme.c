@@ -4874,6 +4874,116 @@ int slsi_mlme_set_host_state(struct slsi_dev *sdev, struct net_device *dev, u16 
 	return r;
 }
 
+int slsi_mlme_sar_set_index(struct slsi_dev *sdev, struct net_device *dev, u8 dsi_id)
+{
+	struct sk_buff *req;
+	struct sk_buff *cfm;
+	int ret = 0;
+
+	SLSI_NET_DBG1(dev, SLSI_MLME, "mlme_sar_set_index(DSI ID = %d)\n", dsi_id);
+
+	req = fapi_alloc(mlme_sar_set_index_req, MLME_SAR_SET_INDEX_REQ, 0, 0);
+	if (!req) {
+		SLSI_NET_ERR(dev, "fapi alloc failure\n");
+		return -ENOMEM;
+	}
+
+	fapi_set_u8(req, u.mlme_sar_set_index_req.dsi_id, dsi_id);
+
+	cfm = slsi_mlme_req_cfm(sdev, NULL, req, MLME_SAR_SET_INDEX_CFM);
+	if (!cfm)
+		return -EIO;
+
+	if (fapi_get_u16(cfm, u.mlme_sar_set_index_cfm.result_code) != FAPI_RESULTCODE_SUCCESS) {
+		SLSI_NET_ERR(dev, "mlme_sar_set_index_cfm(result:0x%04x) ERROR\n",
+			     fapi_get_u16(cfm, u.mlme_sar_set_index_cfm.result_code));
+		ret = -EINVAL;
+	}
+
+	kfree_skb(cfm);
+	return ret;
+}
+
+int slsi_mlme_sar_get_tx_power_limit(struct slsi_dev *sdev, struct net_device *dev, u16 op_class, u8 dsi_id,
+				     struct slsi_mlme_sar_tx_power_limit *limits)
+{
+	struct sk_buff *req;
+	struct sk_buff *cfm;
+
+	SLSI_NET_DBG1(dev, SLSI_MLME, "mlme_sar_get_tx_power_limits(dsi_id = %d, op_class = %d)\n", dsi_id, op_class);
+
+	req = fapi_alloc(mlme_sar_get_tx_power_limits_req, MLME_SAR_GET_TX_POWER_LIMITS_REQ, 0, 0);
+	if (!req) {
+		SLSI_NET_ERR(dev, "fapi alloc failure\n");
+		return -ENOMEM;
+	}
+
+	fapi_set_u16(req, u.mlme_sar_get_tx_power_limits_req.regulatory_domain, op_class);
+	fapi_set_u8(req, u.mlme_sar_get_tx_power_limits_req.dsi_id, dsi_id);
+
+	cfm = slsi_mlme_req_cfm(sdev, NULL, req, MLME_SAR_GET_TX_POWER_LIMITS_CFM);
+	if (!cfm)
+		return -EIO;
+
+	if (fapi_get_u16(cfm, u.mlme_sar_get_tx_power_limits_cfm.result_code) != FAPI_RESULTCODE_SUCCESS) {
+		SLSI_NET_ERR(dev, "mlme_sar_get_tx_power_limits_cfm(result:0x%04x) ERROR\n",
+			     fapi_get_u16(cfm, u.mlme_sar_get_tx_power_limits_cfm.result_code));
+		kfree_skb(cfm);
+		return -EINVAL;
+	}
+
+	limits->antenna1_2g4 = fapi_get_buff(cfm, u.mlme_sar_get_tx_power_limits_cfm.antenna12g4power_limit);
+	limits->antenna2_2g4 = fapi_get_buff(cfm, u.mlme_sar_get_tx_power_limits_cfm.antenna22g4power_limit);
+	limits->antenna1_2_2g4 = fapi_get_buff(cfm, u.mlme_sar_get_tx_power_limits_cfm.antenna1and22g4power_limit);
+
+	limits->antenna1_5g = fapi_get_buff(cfm, u.mlme_sar_get_tx_power_limits_cfm.antenna15g_power_limit);
+	limits->antenna2_5g = fapi_get_buff(cfm, u.mlme_sar_get_tx_power_limits_cfm.antenna25g_power_limit);
+	limits->antenna1_2_5g = fapi_get_buff(cfm, u.mlme_sar_get_tx_power_limits_cfm.antenna1and25g_power_limit);
+
+	limits->antenna1_6g = fapi_get_buff(cfm, u.mlme_sar_get_tx_power_limits_cfm.antenna16g_power_limit);
+	limits->antenna2_6g = fapi_get_buff(cfm, u.mlme_sar_get_tx_power_limits_cfm.antenna26g_power_limit);
+	limits->antenna1_2_6g = fapi_get_buff(cfm, u.mlme_sar_get_tx_power_limits_cfm.antenna1and26g_power_limit);
+
+	kfree_skb(cfm);
+	return 0;
+}
+
+int slsi_mlme_sar_get_avg_tx_power(struct slsi_dev *sdev, struct net_device *dev, u8 dsi_id, u8 report_mode,
+				   struct slsi_sar_avg_tx_power *avg_tx_pwr)
+{
+	struct sk_buff *req;
+	struct sk_buff *cfm;
+	int ret = 0;
+
+	SLSI_NET_DBG1(dev, SLSI_MLME,
+		      "mlme_sar_get_avg_tx_power(DSI ID = %d, report_mode = %d)\n", dsi_id, report_mode);
+
+	req = fapi_alloc(mlme_sar_get_avg_tx_power_req, MLME_SAR_GET_AVG_TX_POWER_REQ, 0, 0);
+	if (!req) {
+		SLSI_NET_ERR(dev, "fapi alloc failure\n");
+		return -ENOMEM;
+	}
+
+	fapi_set_u8(req, u.mlme_sar_get_avg_tx_power_req.dsi_id, dsi_id);
+	fapi_set_u8(req, u.mlme_sar_get_avg_tx_power_req.report_mode, report_mode);
+
+	cfm = slsi_mlme_req_cfm(sdev, NULL, req, MLME_SAR_GET_AVG_TX_POWER_CFM);
+	if (!cfm)
+		return -EIO;
+
+	ret = fapi_get_u16(cfm, u.mlme_sar_get_avg_tx_power_cfm.result_code);
+	if (ret == FAPI_RESULTCODE_SUCCESS) {
+		avg_tx_pwr->antenna1 = fapi_get_buff(cfm, u.mlme_sar_get_avg_tx_power_cfm.power_state_antenna1);
+		avg_tx_pwr->antenna2 = fapi_get_buff(cfm, u.mlme_sar_get_avg_tx_power_cfm.power_state_antenna2);
+	} else {
+		SLSI_NET_ERR(dev, "mlme_sar_get_avg_tx_power_cfm(result:0x%04x) ERROR\n", ret);
+		ret = -EINVAL;
+	}
+	avg_tx_pwr->long_window = fapi_get_u16(cfm, u.mlme_sar_get_avg_tx_power_cfm.tas_long_window);
+	kfree_skb(cfm);
+	return ret;
+}
+
 int slsi_mlme_read_apf_request(struct slsi_dev *sdev, struct net_device *dev, u8 **host_dst, int *datalen)
 {
 	struct netdev_vif *ndev_vif = netdev_priv(dev);

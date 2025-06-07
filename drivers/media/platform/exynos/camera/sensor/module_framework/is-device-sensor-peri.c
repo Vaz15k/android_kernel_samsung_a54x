@@ -21,6 +21,11 @@
 #include "is-device-csi.h"
 #include "is-vender.h"
 
+#if defined(USE_LEDS_FLASH_CHARGING_VOLTAGE_CONTROL)
+#include <linux/muic/common/muic.h>
+#include <linux/usb/typec/slsi/common/usbpd_ext.h>
+#endif
+
 static struct is_device_sensor_peri *get_sensor_peri(struct v4l2_subdev *subdev)
 {
 	struct is_module_enum *module;
@@ -558,6 +563,11 @@ void is_sensor_flash_fire_work(struct work_struct *data)
 				ret = is_sensor_flash_fire(sensor_peri, flash->flash_data.intensity);
 				if (ret) {
 					err("failed to turn off flash at flash expired handler\n");
+#ifdef USE_LEDS_FLASH_CHARGING_VOLTAGE_CONTROL
+					pdo_ctrl_by_flash(0);
+					muic_afc_request_voltage(FLED, 9);
+					info("[%s](%d) MAIN Flash Info: Power Down set Clear(5V -> 9V).\n" ,__func__, __LINE__);
+#endif
 				}
 			} else {
 				flash->flash_ae.main_fls_ae_reset = false;
@@ -581,6 +591,12 @@ void is_sensor_flash_fire_work(struct work_struct *data)
 			if (ret) {
 				err("failed to turn off flash at flash expired handler\n");
 			}
+
+#ifdef USE_LEDS_FLASH_CHARGING_VOLTAGE_CONTROL
+			pdo_ctrl_by_flash(0);
+			muic_afc_request_voltage(FLED, 9);
+			info("[%s](%d) MAIN Flash Info: Power Down set Clear(5V -> 9V).\n" ,__func__, __LINE__);
+#endif
 
 			flash->flash_ae.main_fls_ae_reset = false;
 			flash->flash_ae.main_fls_strm_on_off_step = 0;
@@ -791,6 +807,7 @@ void is_sensor_ois_init_work(struct work_struct *data)
 	}
 }
 #endif
+
 
 int is_sensor_flash_fire(struct is_device_sensor_peri *device,
 				u32 on)
@@ -1171,11 +1188,38 @@ int is_sensor_peri_pre_flash_fire(struct v4l2_subdev *subdev, void *arg)
 		flash->flash_data.mode = flash_uctl->flashMode;
 		flash->flash_data.intensity = flash_uctl->firingPower;
 		flash->flash_data.firing_time_us = flash_uctl->firingTime;
+#ifdef USE_LEDS_FLASH_CHARGING_VOLTAGE_CONTROL
+		if (flash->flash_data.mode == CAM2_FLASH_MODE_TORCH) {
+			muic_afc_set_voltage(5);
+			pdo_ctrl_by_flash(1);
+			info("[%s](%d) Pre-Flash On: Power Down Volatge set(9V -> 5V). \n" ,__func__, __LINE__);
+		}
 
+		info("[%s] pre-flash mode(%d), pow(%d), time(%d)\n", __func__,
+			flash->flash_data.mode,
+			flash->flash_data.intensity, flash->flash_data.firing_time_us);
+
+		/* If pre-flash on failed, set voltage to 9V */
+		ret = is_sensor_flash_fire(sensor_peri, flash->flash_data.intensity);
+		if (ret) {
+			err("failed to turn off flash at flash expired handler\n");
+			if(flash->flash_data.mode == CAM2_FLASH_MODE_TORCH) {
+				pdo_ctrl_by_flash(0);
+				muic_afc_set_voltage(9);
+				info("[%s](%d) Pre-Flash ERR: Power Down Volatge set Clear(5V -> 9V).\n" ,__func__, __LINE__);
+			}
+		}
+		else if (flash->flash_data.mode == CAM2_FLASH_MODE_OFF) { /* Torch off - used only in Video Mode */
+			pdo_ctrl_by_flash(0);
+			muic_afc_set_voltage(9);
+			info("[%s](%d) Pre-Flash OFF: Power Down Volatge set Clear(5V -> 9V).\n" ,__func__, __LINE__);
+		}
+#else
 		info("[%s](%d) pre-flash mode(%d), pow(%d), time(%d)\n", __func__,
 			vsync_count, flash->flash_data.mode,
 			flash->flash_data.intensity, flash->flash_data.firing_time_us);
 		ret = is_sensor_flash_fire(sensor_peri, flash->flash_data.intensity);
+#endif
 	}
 
 	/* update flash expecting dm in current mode */
@@ -2057,6 +2101,11 @@ int is_sensor_peri_s_stream(struct is_device_sensor *device,
 					}
 					sensor_peri->flash->flash_ae.pre_fls_ae_reset = false;
 					sensor_peri->flash->flash_ae.frm_num_pre_fls = 0;
+#ifdef USE_LEDS_FLASH_CHARGING_VOLTAGE_CONTROL
+					pdo_ctrl_by_flash(0);
+					muic_afc_request_voltage(FLED, 9);
+					info("[%s]%d Down Voltage set Clear \n" ,__func__, __LINE__);
+#endif
 				}
 				mutex_unlock(&sensor_peri->cis.control_lock);
 			}

@@ -26,7 +26,11 @@
 #define SENSOR_JN1_CAL_DEBUG                    (0)
 
 #if WRITE_SENSOR_CAL_FOR_HW_GGC
+#ifdef CAL_FOR_HW_GGC_A26x
+#define SENSOR_JN1_HW_GGC_CAL_BASE_REAR        (0x13B2)
+#else
 #define SENSOR_JN1_HW_GGC_CAL_BASE_REAR        (0x13BA)
+#endif
 #define SENSOR_JN1_HW_GGC_CAL_SIZE             (346)
 #if SENSOR_JN1_CAL_DEBUG
 #define SENSOR_JN1_GGC_DUMP_NAME                "/data/vendor/camera/JN1_GGC_DUMP.bin"

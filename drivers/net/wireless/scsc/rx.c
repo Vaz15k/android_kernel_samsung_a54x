@@ -361,8 +361,8 @@ static int slsi_extract_mbssids(struct slsi_dev *sdev, struct netdev_vif *ndev_v
 		ie_len = mgmt_len - (mgmt->u.probe_resp.variable - (u8 *)mgmt);
 	}
 	ie = probe_beacon;
-	
-		if (sdev->wiphy->support_only_he_mbssid &&
+
+	if (sdev->wiphy->support_only_he_mbssid &&
 	    !cfg80211_find_ext_elem(WLAN_EID_EXT_HE_CAPABILITY, ie, ie_len))
 	    return 0;
 
@@ -371,7 +371,6 @@ static int slsi_extract_mbssids(struct slsi_dev *sdev, struct netdev_vif *ndev_v
 		SLSI_ERR(sdev, "kmalloc failed len [%d]\n", ie_len);
 		return 0;
 	}
-
 	for_each_element_id(elem, WLAN_EID_MULTIPLE_BSSID, ie, ie_len) {
 		if ((elem->data - ie) + elem->datalen > ie_len) {
 			SLSI_WARN(sdev, "Invalid ie length found\n");
@@ -2158,143 +2157,6 @@ exit:
 	kfree_skb(skb);
 }
 
-void __slsi_rx_blockack_ind(struct slsi_dev *sdev, struct net_device *dev, struct sk_buff *skb)
-{
-	struct netdev_vif *ndev_vif = netdev_priv(dev);
-	struct ieee80211_mgmt *mgmt;
-	struct ieee80211_bar *bar;
-	struct slsi_peer  *peer = NULL;
-	u8 *peer_mac_addr;
-	u16 params;
-	u16 reason_code;
-	u16 priority;
-	u16 buffer_size = 0;
-	u16 sequence_num = 0;
-
-	switch (fapi_get_sigid(skb)) {
-	case MA_BLOCKACKREQ_IND:
-		SLSI_NET_DBG1(dev, SLSI_MLME,
-			      "ma_blockackreq_ind(vif:%d, timestamp:%u)\n",
-			      fapi_get_vif(skb),
-			      fapi_get_buff(skb, u.ma_blockackreq_ind.timestamp));
-
-		if (fapi_get_datalen(skb) >= sizeof(struct ieee80211_bar)) {
-			bar = (struct ieee80211_bar *)fapi_get_data(skb);
-		} else {
-			SLSI_NET_DBG1(dev, SLSI_MLME, "invalid fapidata length.\n");
-			goto invalid;
-		}
-
-		if (!bar) {
-			WLBT_WARN(1, "invalid bulkdata for BAR frame\n");
-			goto invalid;
-		}
-
-		peer = slsi_get_peer_from_mac(sdev, dev, bar->ta);
-		priority = (bar->control & IEEE80211_BAR_CTRL_TID_INFO_MASK) >> IEEE80211_BAR_CTRL_TID_INFO_SHIFT;
-		sequence_num = le16_to_cpu(bar->start_seq_num) >> 4;
-		reason_code = FAPI_REASONCODE_UNSPECIFIED_REASON;
-		break;
-	case MLME_BLOCKACK_ACTION_IND:
-		SLSI_NET_DBG1(dev, SLSI_MLME,
-			      "mlme_blockack_action_ind(vif:%d, peer_sta_address:%pM, priority:%d, timestamp:%u)\n",
-			      fapi_get_vif(skb),
-			      fapi_get_buff(skb, u.mlme_blockack_action_ind.peer_sta_address),
-			      fapi_get_u16(skb, u.mlme_blockack_action_ind.tid),
-			      fapi_get_u16(skb, u.mlme_blockack_action_ind.timestamp));
-
-		peer_mac_addr = fapi_get_buff(skb, u.mlme_blockack_action_ind.peer_sta_address);
-		mgmt = (fapi_get_mgmtlen(skb)) ? fapi_get_mgmt(skb) : NULL;
-		if (!mgmt) {
-
-			/* If no bulkdata is provided, Delete the Rx BlockAck
-			 * for specified Peer and TID.
-			 */
-			peer = slsi_get_peer_from_mac(sdev, dev, peer_mac_addr);
-			priority = fapi_get_u16(skb, u.mlme_blockack_action_ind.tid);
-			reason_code = FAPI_REASONCODE_END;
-			break;
-		}
-
-		if (ieee80211_is_action(mgmt->frame_control) &&
-			mgmt->u.action.category == WLAN_CATEGORY_BACK) {
-		    switch (mgmt->u.action.u.addba_req.action_code) {
-			case WLAN_ACTION_ADDBA_REQ:
-				peer = slsi_get_peer_from_mac(sdev, dev, peer_mac_addr);
-				sequence_num = le16_to_cpu(mgmt->u.action.u.addba_req.start_seq_num) >> 4;
-				params = le16_to_cpu(mgmt->u.action.u.addba_req.capab);
-				priority = (params & IEEE80211_ADDBA_PARAM_TID_MASK) >> 2;
-				buffer_size = (params & IEEE80211_ADDBA_PARAM_BUF_SIZE_MASK) >> 6;
-				reason_code = FAPI_REASONCODE_START;
-				break;
-			case WLAN_ACTION_DELBA:
-				peer = slsi_get_peer_from_mac(sdev, dev, peer_mac_addr);
-				params = le16_to_cpu(mgmt->u.action.u.delba.params);
-				priority = (params & IEEE80211_DELBA_PARAM_TID_MASK) >> 12;
-				reason_code = FAPI_REASONCODE_END;
-				break;
-			default:
-				SLSI_NET_WARN(dev, "invalid action frame\n");
-				break;
-			}
-		} else {
-			SLSI_NET_WARN(dev, "invalid frame, not an action frame or not BA category\n");
-		}
-		break;
-	default:
-		SLSI_NET_WARN(dev, "invalid signal ID\n");
-		break;
-	}
-	WLBT_WARN_ON(!peer);
-
-	if (peer) {
-		if (priority >= NUM_BA_SESSIONS_PER_PEER) {
-			SLSI_NET_DBG3(dev, SLSI_MLME, "priority is invalid (priority:%d)\n", priority);
-			goto invalid;
-		}
-
-		/* Buffering of frames before the mlme_connected_ind */
-		if (ndev_vif->vif_type == FAPI_VIFTYPE_AP && peer->connected_state == SLSI_STA_CONN_STATE_CONNECTING) {
-			SLSI_NET_DBG3(dev, SLSI_MLME, "buffering MA_BLOCKACKREQ_IND\n");
-			skb_queue_tail(&peer->buffered_frames[priority], skb);
-			return;
-		}
-
-		/* Buffering of Block Ack Request frame before the Add BA Request */
-		if ((reason_code == FAPI_REASONCODE_UNSPECIFIED_REASON) && !peer->ba_session_rx[priority]) {
-			SLSI_NET_DBG3(dev, SLSI_MLME, "buffering MA_BLOCKACKREQ_IND (peer:%pM, priority:%d)\n", peer->address, priority);
-			skb_queue_tail(&peer->buffered_frames[priority], skb);
-			return;
-		}
-
-		slsi_handle_blockack(
-			dev,
-			peer,
-			reason_code,
-			priority,
-			buffer_size,
-			sequence_num
-			);
-	}
-invalid:
-	kfree_skb(skb);
-}
-
-void slsi_rx_blockack_ind(struct slsi_dev *sdev, struct net_device *dev, struct sk_buff *skb)
-{
-	struct netdev_vif *ndev_vif = netdev_priv(dev);
-
-	SLSI_MUTEX_LOCK(ndev_vif->vif_mutex);
-	if (!ndev_vif->activated) {
-		SLSI_NET_DBG1(dev, SLSI_MLME, "VIF not activated\n");
-		SLSI_MUTEX_UNLOCK(ndev_vif->vif_mutex);
-		kfree_skb(skb);
-		return;
-	}
-	__slsi_rx_blockack_ind(sdev, dev, skb);
-	SLSI_MUTEX_UNLOCK(ndev_vif->vif_mutex);
-}
-
 void slsi_rx_ma_to_mlme_delba_req(struct slsi_dev *sdev, struct net_device *dev, struct sk_buff *skb)
 {
 	struct netdev_vif *ndev_vif = netdev_priv(dev);
@@ -2811,8 +2673,8 @@ void slsi_rx_buffered_frames(struct slsi_dev *sdev, struct net_device *dev, stru
 		while (buff_frame) {
 			switch (fapi_get_sigid(buff_frame)) {
 			case MA_BLOCKACKREQ_IND:
-				SLSI_NET_DBG2(dev, SLSI_MLME, "transferring buffered MA_BLOCKACK_IND frame");
-				__slsi_rx_blockack_ind(sdev, dev, buff_frame);
+				SLSI_NET_DBG2(dev, SLSI_RX, "transferring buffered MA_BLOCKACK_IND frame");
+				slsi_rx_ma_blockack_ind(sdev, dev, buff_frame);
 				break;
 			default:
 				SLSI_NET_WARN(dev, "Unexpected Data: 0x%.4x\n", fapi_get_sigid(buff_frame));
@@ -2833,8 +2695,8 @@ void slsi_rx_buffered_frames(struct slsi_dev *sdev, struct net_device *dev, stru
 			slsi_debug_frame(sdev, dev, buff_frame, "RX_BUFFERED");
 			switch (fapi_get_sigid(buff_frame)) {
 			case MA_BLOCKACKREQ_IND:
-				SLSI_NET_DBG2(dev, SLSI_MLME, "transferring buffered MA_BLOCKACK_IND frame");
-				__slsi_rx_blockack_ind(sdev, dev, buff_frame);
+				SLSI_NET_DBG2(dev, SLSI_RX, "transferring buffered MA_BLOCKACK_IND frame");
+				slsi_rx_ma_blockack_ind(sdev, dev, buff_frame);
 				break;
 			default:
 				SLSI_NET_WARN(dev, "Unexpected Data: 0x%.4x\n", fapi_get_sigid(buff_frame));
@@ -2851,6 +2713,10 @@ void slsi_rx_synchronised_ind(struct slsi_dev *sdev, struct net_device *dev, str
 {
 	struct netdev_vif *ndev_vif = netdev_priv(dev);
 	struct cfg80211_external_auth_params auth_request;
+	struct ieee80211_mgmt *mgmt = fapi_get_mgmt(skb);
+	size_t mgmt_len = fapi_get_mgmtlen(skb);
+	int ie_len = mgmt_len - (mgmt->u.probe_resp.variable - (u8 *)mgmt);
+	const u8 *rsn = cfg80211_find_ie(WLAN_EID_RSN, mgmt->u.probe_resp.variable, ie_len);
 	int r, synch_ind_time = 0;
 	u16 sae_auth = 0;
 	u8 bssid[ETH_ALEN] = {0};
@@ -2870,8 +2736,12 @@ void slsi_rx_synchronised_ind(struct slsi_dev *sdev, struct net_device *dev, str
 		goto exit;
 	}
 
-	SLSI_NET_DBG1(dev, SLSI_MLME, "Received synchronised_ind, bssid:%pM SAE Auth Request = %d\n", bssid, sae_auth);
-	if (ndev_vif->sta.crypto.wpa_versions == 3 && !sae_auth) {
+	SLSI_NET_DBG1(dev, SLSI_MLME, "Received synchronised_ind, bssid:" MACSTR " SAE Auth Request = %d\n",
+		      MAC2STR(bssid), sae_auth);
+	if (sae_auth) {
+		if (slsi_wake_lock_active(&ndev_vif->wlan_wl_sae))
+			slsi_wake_unlock(&ndev_vif->wlan_wl_sae);
+	} else {
 		slsi_rx_scan_pass_to_cfg80211(sdev, dev, skb, false);
 		if (!slsi_wake_lock_active(&ndev_vif->wlan_wl_sae))
 			slsi_wake_lock(&ndev_vif->wlan_wl_sae);
@@ -2885,6 +2755,41 @@ void slsi_rx_synchronised_ind(struct slsi_dev *sdev, struct net_device *dev, str
 		memcpy(auth_request.bssid, bssid, ETH_ALEN);
 		memcpy(auth_request.ssid.ssid, ndev_vif->sta.ssid, ndev_vif->sta.ssid_len);
 		auth_request.ssid.ssid_len = ndev_vif->sta.ssid_len;
+		if (rsn) {
+			if (cpu_to_be32(ndev_vif->sta.crypto.akm_suites[0]) == SLSI_KEY_MGMT_PSK ||
+			    cpu_to_be32(ndev_vif->sta.crypto.akm_suites[0]) == SLSI_KEY_MGMT_PSK_SHA) {
+				int i, pos = 0;
+
+				pos = 7 + 2 + (rsn[8] * 4) + 2;
+				for (i = 0; i < rsn[pos - 1]; i++) {
+					if (rsn[pos + (i + 1) * 4] == 0x08) {
+						pos += i * 4;
+						break;
+					}
+				}
+				if (rsn[pos + 4] == 0x08) {
+					ndev_vif->sta.crypto.akm_suites[0] = ((rsn[pos + 4] << 24) |
+									      (rsn[pos + 3] << 16) |
+									      (rsn[pos + 2] << 8) |
+									      (rsn[pos + 1]));
+				} else {
+					SLSI_NET_ERR(dev, "SAE AKM Suite(00-0F-AC:8) is NOT in Probe Response\n");
+					goto exit;
+				}
+				ndev_vif->sta.use_set_pmksa = 1;
+				ndev_vif->sta.rsn_ie_len = rsn[1];
+				kfree(ndev_vif->sta.rsn_ie);
+				ndev_vif->sta.rsn_ie = NULL;
+				/* Len+2 because RSN IE TAG and Length */
+				ndev_vif->sta.rsn_ie = kmalloc(ndev_vif->sta.rsn_ie_len + 2, GFP_KERNEL);
+
+				/* len+2 because RSNIE TAG and Length */
+				if (ndev_vif->sta.rsn_ie)
+					memcpy(ndev_vif->sta.rsn_ie, rsn, ndev_vif->sta.rsn_ie_len + 2);
+			}
+		}
+		ndev_vif->sta.crypto.wpa_versions = 3;
+
 		auth_request.key_mgmt_suite = ndev_vif->sta.crypto.akm_suites[0];
 
 		r = cfg80211_external_auth_request(dev, &auth_request, GFP_KERNEL);
@@ -4400,12 +4305,12 @@ void slsi_rx_received_frame_ind(struct slsi_dev *sdev, struct net_device *dev, s
 			skb->mark = SLSI_WAKEUP_PKT_MARK;
 			slsi_rx_update_wake_stats(sdev, ehdr, skb->len - fapi_get_siglen(skb), skb);
 		}
-		
+
 		if (fapi_get_datalen(skb) < sizeof(struct ethhdr)) {
 			SLSI_DBG1(sdev, SLSI_RX, "invalid fapi data length.\n");
 			goto exit;
 		}
-		
+
 		peer = slsi_get_peer_from_mac(sdev, dev, ehdr->h_source);
 		if (!peer) {
 			SLSI_DBG1(sdev, SLSI_RX, "drop packet as No peer found\n");
@@ -4584,8 +4489,10 @@ int slsi_rx_blocking_signals(struct slsi_dev *sdev, struct sk_buff *skb)
 		struct netdev_vif *ndev_vif;
 
 #if defined(CONFIG_SCSC_WLAN_TAS)
-		if (slsi_rx_tas_drop_cfm(id, pid))
+		if (slsi_rx_tas_drop_cfm(id, pid)) {
+			kfree_skb(skb);
 			return 0;
+		}
 #endif
 		rcu_read_lock();
 		if (vif == SLSI_NET_INDEX_DETECT &&

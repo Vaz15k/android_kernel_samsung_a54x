@@ -1954,6 +1954,7 @@ static void is_group_override_sensor_req(struct is_group *group,
 		if (frame->shot->ctl.aa.aeMode == AA_AEMODE_OFF
 		    || frame->shot->ctl.aa.mode == AA_CONTROL_OFF) {
 			prev->shot->ctl.sensor.exposureTime	= frame->shot->ctl.sensor.exposureTime;
+			prev->shot->ctl.aa.vendor_captureExposureTime = frame->shot->ctl.aa.vendor_captureExposureTime;
 			prev->shot->ctl.sensor.frameDuration	= frame->shot->ctl.sensor.frameDuration;
 			prev->shot->ctl.sensor.sensitivity	= frame->shot->ctl.sensor.sensitivity;
 			prev->shot->ctl.aa.vendor_isoValue	= frame->shot->ctl.aa.vendor_isoValue;
@@ -2553,7 +2554,7 @@ p_skip_sync:
 	is_group_debug_aa_shot(group, frame);
 #endif
 
-	is_group_set_torch(group, frame);
+//	is_group_set_torch(group, frame);
 
 	ret = group->shot_callback(device, group, frame);
 	if (unlikely(ret)) {
@@ -2575,6 +2576,8 @@ p_skip_sync:
 	clear_bit(IS_GROUP_SHOT, &group->state);
 	PROGRAM_COUNT(12);
 	TIME_SHOT(TMS_SHOT1);
+
+	is_group_set_torch(group, frame);
 
 	return 0;
 

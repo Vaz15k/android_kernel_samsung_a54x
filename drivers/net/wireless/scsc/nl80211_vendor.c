@@ -506,6 +506,7 @@ struct slsi_gscan_result *slsi_prepare_scan_result(struct sk_buff *skb, u16 anqp
 
 	ie = &mgmt->u.beacon.variable[0];
 	ie_len = fapi_get_datalen(skb) - (ie - (u8 *)mgmt) - anqp_length;
+
 	if (ie_len <= 0) {
 		SLSI_ERR_NODEV("invalid ie_len : %d\n", ie_len);
 		return NULL;
@@ -1707,6 +1708,11 @@ static int slsi_start_keepalive_offload(struct wiphy *wiphy, struct wireless_dev
 			goto exit;
 		}
 	}
+	if (!index) {
+		SLSI_WARN_NODEV("No MKEEP_ALIVE_ATTRIBUTE_ID\n");
+		r = -EINVAL;
+		goto exit;
+	}
 
 	/* Stop any existing request. This may fail if no request exists
 	  * so ignore the return value
@@ -1824,6 +1830,11 @@ static int slsi_stop_keepalive_offload(struct wiphy *wiphy, struct wireless_dev 
 			r = -EINVAL;
 			goto exit;
 		}
+	}
+	if (!index) {
+		SLSI_WARN_NODEV("No MKEEP_ALIVE_ATTRIBUTE_ID\n");
+		r = -EINVAL;
+		goto exit;
 	}
 
 	r = slsi_mlme_send_frame_mgmt(sdev, net_dev, NULL, 0, FAPI_DATAUNITDESCRIPTOR_IEEE802_3_FRAME,
@@ -3632,8 +3643,12 @@ static int slsi_set_roaming_state(struct wiphy *wiphy, struct wireless_dev *wdev
 		}
 	}
 
-	SLSI_DBG1_NODEV(SLSI_GSCAN, "SUBCMD_SET_ROAMING_STATE roam_state = %d\n", roam_state);
-	ret = slsi_set_mib_roam(sdev, NULL, SLSI_PSID_UNIFI_ROAMING_ACTIVATED, roam_state);
+	if (!slsi_is_rf_test_mode_enabled()) {
+		SLSI_DBG1_NODEV(SLSI_GSCAN, "SUBCMD_SET_ROAMING_STATE roam_state = %d\n", roam_state);
+		ret = slsi_set_mib_roam(sdev, NULL, SLSI_PSID_UNIFI_ROAMING_ACTIVATED, roam_state);
+	} else {
+		SLSI_DBG1_NODEV(SLSI_GSCAN, "Ignoring SUBCMD_SET_ROAMING_STATE for roam_state = %d in RF Test Mode.\n", roam_state);
+	}
 	if (ret < 0)
 		SLSI_ERR_NODEV("Failed to set roaming state\n");
 
@@ -6251,6 +6266,9 @@ slsi_wlan_vendor_lls_policy[LLS_ATTRIBUTE_MAX + 1] = {
 	[LLS_ATTRIBUTE_SET_AGGR_STATISTICS_GATHERING] = {.type = NLA_U32},
 	[LLS_ATTRIBUTE_CLEAR_STOP_REQUEST_MASK] = {.type = NLA_U32},
 	[LLS_ATTRIBUTE_CLEAR_STOP_REQUEST] = {.type = NLA_U32},
+	[LLS_ATTRIBUTE_STATS_VERSION] 			= {.type = NLA_U32},
+	[LLS_ATTRIBUTE_GET_STATS_TYPE] 			= {.type = NLA_U32},
+	[LLS_ATTRIBUTE_GET_STATS_STRUCT] 		= {.type = NLA_U32},
 };
 
 static const struct nla_policy
@@ -7252,8 +7270,8 @@ static void slsi_nll80211_vendor_init_policy(struct wiphy_vendor_command *slsi_v
 			vcmd->maxattr = LLS_ATTRIBUTE_MAX;
 			break;
 		case SLSI_NL80211_VENDOR_SUBCMD_LSTATS_SUBCMD_GET_STATS:
-			vcmd->policy = VENDOR_CMD_RAW_DATA;
-			vcmd->maxattr = 0;
+			vcmd->policy = slsi_wlan_vendor_lls_policy;
+			vcmd->maxattr = LLS_ATTRIBUTE_MAX;
 			break;
 		case SLSI_NL80211_VENDOR_SUBCMD_LSTATS_SUBCMD_CLEAR_STATS:
 			vcmd->policy = slsi_wlan_vendor_lls_policy;
@@ -7415,6 +7433,7 @@ enum slsi_tas_cmd {
 	SLSI_TAS_CMD_GET_CONFIG,
 	SLSI_TAS_CMD_UPDATE_SAR_LIMIT_UPPER,
 	SLSI_TAS_CMD_REQUEST_NOTIFICATION,
+	SLSI_TAS_CMD_UPDATE_SAR_TARGET,
 	SLSI_TAS_CMD_MAX,
 };
 
@@ -7442,6 +7461,7 @@ static int slsi_tas_tx_sar_limit_req(struct sk_buff *skb, struct genl_info *info
 	struct slsi_tas_info *tas_info = NULL;
 	struct tas_sar_param sar_param = {0};
 	int err = 0;
+
 	if (!sdev)
 		return -ENODEV;
 	tas_info = &sdev->tas_info;
@@ -7471,6 +7491,7 @@ static int slsi_tas_short_win_num_req(struct sk_buff *skb, struct genl_info *inf
 {
 	struct slsi_dev *sdev = slsi_get_sdev();
 	struct tas_sar_param sar_param = {0};
+
 	if (!sdev)
 		return -ENODEV;
 
@@ -7510,6 +7531,7 @@ static int slsi_tas_fill_config(struct sk_buff *msg, struct genl_info *info)
 	void *hdr = NULL;
 	struct nlattr *attr = NULL;
 	int type = 0;
+
 	if (!sdev)
 		return -ENODEV;
 	tas_info = &sdev->tas_info;
@@ -7604,6 +7626,7 @@ static struct nla_policy slsi_tas_policy[SLSI_TAS_ATTR_MAX + 1] = {
 	[SLSI_TAS_ATTR_IF_ENABLED] = { .type = NLA_U8 },
 	[SLSI_TAS_ATTR_SAR_LIMIT_UPPER] = { .type = NLA_U16 },
 	[SLSI_TAS_ATTR_IF_STATUS_ENTRIES] = { .type = NLA_NESTED },
+	[SLSI_TAS_ATTR_SAR_COMPLIANCE] = { .type = NLA_U16 },
 };
 
 static const struct genl_multicast_group slsi_tas_mcgrp[] = {
@@ -7662,8 +7685,10 @@ int slsi_tas_notify_sar_ind(struct slsi_dev *sdev, struct net_device *dev, struc
 	u16 win_num = 0, sar = 0;
 	int ret = 0;
 
-	if (!is_support_notification())
+	if (!is_support_notification()) {
+		kfree_skb(skb);
 		return ret;
+	}
 
 	win_num = fapi_get_u16(skb, u.mlme_sar_ind.short_window_number);
 	sar = fapi_get_u16(skb, u.mlme_sar_ind.sar);
@@ -7697,6 +7722,7 @@ static int slsi_tas_fill_if_status(struct sk_buff *msg, enum slsi_tas_if_type ty
 	struct slsi_dev *sdev = slsi_get_sdev();
 	struct slsi_tas_info *tas_info = NULL;
 	void *hdr;
+
 	if (!sdev)
 		return -ENODEV;
 	tas_info = &sdev->tas_info;
@@ -7732,6 +7758,7 @@ static void slsi_tas_notify_if_status(enum slsi_tas_if_type type, bool enabled)
 	struct slsi_tas_info *tas_info = NULL;
 	struct sk_buff *msg = NULL;
 	int ret = 0;
+
 	if (!sdev)
 		return;
 	tas_info = &sdev->tas_info;
@@ -7768,11 +7795,6 @@ void slsi_tas_notify_wifi_status(bool enabled)
 	slsi_tas_notify_if_status(SLSI_TAS_IF_TYPE_WIFI, enabled);
 }
 
-static void slsi_tas_notify_bt_status(bool enabled)
-{
-	slsi_tas_notify_if_status(SLSI_TAS_IF_TYPE_BT, enabled);
-}
-
 static int slsi_tas_fill_sar_limit_upper(struct sk_buff *msg, u16 sar_limit_upper)
 {
 	void *hdr;
@@ -7799,8 +7821,10 @@ int slsi_tas_notify_sar_limit_upper(struct slsi_dev *sdev, struct net_device *de
 	struct sk_buff *msg = NULL;
 	int ret = 0;
 
-	if (!is_support_notification())
+	if (!is_support_notification()) {
+		kfree_skb(skb);
 		return ret;
+	}
 
 	msg = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!msg) {
@@ -7826,11 +7850,65 @@ int slsi_tas_notify_sar_limit_upper(struct slsi_dev *sdev, struct net_device *de
 	return ret;
 }
 
+static int slsi_tas_fill_sar_target(struct sk_buff *msg, u16 sar_target)
+{
+	void *hdr;
+
+	hdr = genlmsg_put(msg, 0, 0, &slsi_tas_fam, 0, SLSI_TAS_CMD_UPDATE_SAR_TARGET);
+	if (!hdr) {
+		SLSI_ERR_NODEV("genlmsg_put failed\n");
+		return -EMSGSIZE;
+	}
+
+	if (nla_put_u16(msg, SLSI_TAS_ATTR_SAR_COMPLIANCE, sar_target)) {
+		SLSI_ERR_NODEV("attr put failed\n");
+		genlmsg_cancel(msg, hdr);
+		return -EMSGSIZE;
+	}
+
+	genlmsg_end(msg, hdr);
+	return 0;
+}
+
+int slsi_tas_notify_sar_target(struct slsi_dev *sdev, struct net_device *dev, struct sk_buff *skb)
+{
+	struct slsi_tas_info *tas_info = &sdev->tas_info;
+	struct sk_buff *msg = NULL;
+	int ret = 0;
+
+	if (!is_support_notification()) {
+		kfree_skb(skb);
+		return ret;
+	}
+
+	msg = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
+	if (!msg) {
+		SLSI_ERR_NODEV("No memory\n");
+		kfree_skb(skb);
+		return -ENOMEM;
+	}
+
+	tas_info->sar_compliance = fapi_get_u16(skb, u.mlme_sar_target_ind.sar_target);
+
+	ret = slsi_tas_fill_sar_target(msg, tas_info->sar_compliance);
+	if (ret) {
+		nlmsg_free(msg);
+		kfree_skb(skb);
+		return ret;
+	}
+
+	ret = genlmsg_multicast_allns(&slsi_tas_fam, msg, 0, 0, GFP_KERNEL);
+	if (ret)
+		SLSI_ERR_NODEV("genlmsg_multicast_allns failed : [%d]\n", ret);
+
+	kfree_skb(skb);
+	return ret;
+}
+
 void slsi_tas_nl_deinit(void)
 {
 	SLSI_INFO_NODEV("TAS nl deinit\n");
 	genl_unregister_family(&slsi_tas_fam);
-	scsc_service_unregister_check_bt_status_cb();
 }
 
 void slsi_tas_nl_init(void)
@@ -7842,8 +7920,6 @@ void slsi_tas_nl_init(void)
 	err = genl_register_family(&slsi_tas_fam);
 	if (err)
 		SLSI_ERR_NODEV("genl_register_family failed : [%d]\n", err);
-
-	scsc_service_register_check_bt_status_cb(slsi_tas_notify_bt_status);
 }
 #endif
 

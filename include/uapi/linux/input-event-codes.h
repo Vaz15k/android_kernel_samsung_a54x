@@ -786,6 +786,7 @@
 #define BTN_HOTKEY_APP1 		0x2f5
 #define BTN_HOTKEY_APP2 		0x2f6
 #define BTN_HOTKEY_APP3 		0x2f7
+#define KEYCODE_AI_HOT			0x2f8
 
 /* We avoid low common keys in module aliases so they don't get huge. */
 #define KEY_MIN_INTERESTING	KEY_MUTE

@@ -2114,7 +2114,7 @@ static inline int __mfc_nal_q_irq(struct mfc_core *core,
 
 		mfc_core_clear_int();
 
-		if (!nal_q_handle->nal_q_exception)
+		if (!nal_q_handle->nal_q_exception && nal_q_handle->nal_q_state != NAL_Q_STATE_STOPPED)
 			mfc_core_nal_q_clock_off(core, nal_q_handle);
 
 		if (ctx_num < 0) {

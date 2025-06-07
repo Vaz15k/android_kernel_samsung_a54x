@@ -182,6 +182,7 @@ struct dsim_reg_config {
 	u32			burst_cmd_en;
 	u32			drive_strength;
 	bool			emul_mode;
+	bool 			disable_shdw_vss_updt;
 	bool			lp_force_en;
 	bool			ignore_rx_trail;
 };

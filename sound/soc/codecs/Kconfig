@@ -2030,4 +2030,10 @@ config SND_AW_FEEDFORWARD
 	bool "Awinic aw882xx series Feedforward Algorithm in external DSP"
 	depends on SND_SMARTPA_AW882XX
 
+config SND_SOC_FS1816
+	tristate "FourSemi fs1816 Codec Driver"
+	depends on I2C
+	help
+	  for FourSemi True Smart Amplifier
+
 endmenu

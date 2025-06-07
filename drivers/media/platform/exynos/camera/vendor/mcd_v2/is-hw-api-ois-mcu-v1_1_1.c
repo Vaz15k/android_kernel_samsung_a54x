@@ -187,7 +187,33 @@ int __is_mcu_hw_set_init_peri(void __iomem *base)
 	int ret = 0;
 	u32 recover_val = 0;
 	u32 src = 0;
+#if defined(CLEAR_OIS_PREV_STATE)
+	/* GPP1 (4~5 bits are for OIS I2C) */
+	src = is_mcu_get_reg(base, R_OIS_PERI_CON_CTRL);
+	recover_val = src & 0xFF00FFFF;
+	recover_val |= 0x00440000;
+	is_mcu_set_reg(base, R_OIS_PERI_CON_CTRL, recover_val);
 
+	src = is_mcu_get_reg(base, R_OIS_PERI_PUD_CTRL);
+	recover_val = src & 0xFF00FFFF;
+#ifdef USE_OIS_EXTERNAL_PU
+	recover_val |= 0x00000000;
+#else
+	recover_val |= 0x00550000;
+#endif
+	is_mcu_set_reg(base, R_OIS_PERI_PUD_CTRL, recover_val);
+
+	/* GPP2 (0~3 bits are for OIS SPI) */
+	src = is_mcu_get_reg(base, R_OIS_PERI2_CON_CTRL);
+	recover_val = src & 0xFFFF0000;
+	recover_val |= 0x00004444;
+	is_mcu_set_reg(base, R_OIS_PERI2_CON_CTRL, recover_val);
+
+	src = is_mcu_get_reg(base, R_OIS_PERI2_PUD_CTRL);
+	recover_val = src & 0xFFFF0000;
+	recover_val |= 0x00000000;
+	is_mcu_set_reg(base, R_OIS_PERI2_PUD_CTRL, recover_val);
+#else
 	/* GPP1 (4~5 bits are for OIS I2C) */
 	src = is_mcu_get_reg(base, R_OIS_PERI_CON_CTRL);
 	recover_val = src & 0xFF00FFFF;
@@ -196,7 +222,11 @@ int __is_mcu_hw_set_init_peri(void __iomem *base)
 
 	src = is_mcu_get_reg(base, R_OIS_PERI_PUD_CTRL);
 	recover_val = src & 0xFF00FFFF;
+#ifdef USE_OIS_EXTERNAL_PU
+	recover_val = src | 0x00000000;
+#else
 	recover_val = src | 0x00550000;
+#endif
 	is_mcu_set_reg(base, R_OIS_PERI_PUD_CTRL, recover_val);
 
 	/* GPP2 (0~3 bits are for OIS SPI) */
@@ -209,7 +239,7 @@ int __is_mcu_hw_set_init_peri(void __iomem *base)
 	recover_val = src & 0xFFFF0000;
 	recover_val = src | 0x00000000;
 	is_mcu_set_reg(base, R_OIS_PERI2_PUD_CTRL, recover_val);
-
+#endif
 	return ret;
 }
 
@@ -233,6 +263,9 @@ int __is_mcu_hw_set_clear_peri(void __iomem *base)
 
 	src = is_mcu_get_reg(base, R_OIS_PERI2_PUD_CTRL);
 	recover_val = src & 0xFFFF0000;
+#ifdef SET_OIS_SPI_PUD_IN_M36X
+	recover_val |= 0x00003111;
+#endif
 #ifdef SET_OIS_SPI_NONE_AFTER_POWER_OFF
 	recover_val = src | 0x00000000;
 #endif

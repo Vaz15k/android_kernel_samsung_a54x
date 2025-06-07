@@ -924,6 +924,14 @@ static int dsim_parse_dt(struct dsim_device *dsim)
 	if (!dsim->emul_mode)
 		dsim_acquire_fb_resource(dsim);
 
+	ret = of_property_read_u32(np, "dsim,disable-shdw-vss-updt", &val);
+	if (ret == -EINVAL || (ret == 0 && val == 0))
+		dsim->config.disable_shdw_vss_updt = false;
+	else
+		dsim->config.disable_shdw_vss_updt = true;
+	dsim_info(dsim, "disable_shdw_vss_updt=%d\n",
+			dsim->config.disable_shdw_vss_updt);
+
 	return 0;
 }
 

@@ -234,8 +234,6 @@ static int sm5714_fled_torch_on(u8 brightness)
 		return -ENXIO;
 	}
 
-	mutex_lock(&fled->fled_mutex);
-
 	if (brightness) {
 		fled_set_mled_current(fled, brightness);
 	} else {
@@ -251,8 +249,6 @@ static int sm5714_fled_torch_on(u8 brightness)
 	}
 
 	sm5714_fled_control(FLED_MODE_TORCH);
-
-	mutex_unlock(&fled->fled_mutex);
 
 	pr_info("sm5714-fled: %s: done.\n", __func__);
 
@@ -306,8 +302,6 @@ static int sm5714_fled_flash_on(u8 brightness)
 		return -ENXIO;
 	}
 
-	mutex_lock(&fled->fled_mutex);
-
 	if (brightness) {
 		fled_set_fled_current(fled, brightness);
 	} else {
@@ -322,8 +316,6 @@ static int sm5714_fled_flash_on(u8 brightness)
 		fled->flash_on_cnt++;
 	}
 	sm5714_fled_control(FLED_MODE_FLASH);
-
-	mutex_unlock(&fled->fled_mutex);
 
 	pr_info("sm5714-fled: %s: done.\n", __func__);
 
@@ -346,8 +338,6 @@ static int sm5714_fled_prepare_flash(void)
 		return 0;
 	}
 
-	mutex_lock(&fled->fled_mutex);
-
 	if (fled->flash_prepare_cnt == 0) {
 		sm5714_fled_check_vbus(fled);
 		muic_check_fled_state(1, FLED_MODE_FLASH);
@@ -358,8 +348,6 @@ static int sm5714_fled_prepare_flash(void)
 
 	fled->flash_prepare_cnt++;
 	fled->pdata->led.pre_fled = true;
-
-	mutex_unlock(&fled->fled_mutex);
 
 	pr_info("sm5714-fled: %s: done.\n", __func__);
 
@@ -382,8 +370,6 @@ static int sm5714_fled_close_flash(void)
 		return 0;
 	}
 
-	mutex_lock(&fled->fled_mutex);
-
 	fled_set_mode(fled, FLED_MODE_OFF);
 	fled->flash_prepare_cnt--;
 
@@ -394,8 +380,6 @@ static int sm5714_fled_close_flash(void)
 		sm5714_usbpd_check_fled_state(0, FLED_MODE_FLASH);
 	}
 	fled->pdata->led.pre_fled = false;
-
-	mutex_unlock(&fled->fled_mutex);
 
 	pr_info("sm5714-fled: %s: done.\n", __func__);
 
@@ -451,6 +435,7 @@ int32_t sm5714_fled_mode_ctrl(int state, uint32_t brightness)
 
 	switch (state) {
 
+	mutex_lock(&fled->fled_mutex);
 	case SM5714_FLED_MODE_OFF:
 		/* FlashLight Mode OFF */
 		ret = sm5714_fled_control(FLED_MODE_OFF);
@@ -538,6 +523,7 @@ int32_t sm5714_fled_mode_ctrl(int state, uint32_t brightness)
 			pr_info("sm5714-fled: %s: FLED_MODE_OFF(%d) done\n", __func__, state);
 		break;
 	}
+	mutex_unlock(&fled->fled_mutex);
 
 	return ret;
 }

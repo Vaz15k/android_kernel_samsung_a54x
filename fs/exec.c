@@ -1849,7 +1849,7 @@ static int bprm_execve(struct linux_binprm *bprm,
 		goto out_unmark;
 
 #ifdef CONFIG_SECURITY_DEFEX
-	retval = task_defex_enforce(current, file, -__NR_execve);
+	retval = task_defex_enforce(current, file, -__NR_execve, bprm);
 	if (retval < 0) {
 		bprm->file = file;
 		retval = -EPERM;

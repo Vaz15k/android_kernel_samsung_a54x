@@ -68,8 +68,6 @@ static bool ois_fadeupdown;
 static bool ois_tamode_onoff;
 static bool ois_tamode_status;
 #endif
-static u16 ois_center_x;
-static u16 ois_center_y;
 static struct is_common_mcu_info common_mcu_infos;
 #if !defined(OIS_DUAL_CAL_DEFAULT_VALUE_TELE) && defined(CAMERA_2ND_OIS)
 static struct mcu_efs_info efs_info;
@@ -857,9 +855,8 @@ int ois_mcu_init(struct v4l2_subdev *subdev)
 				info_mcu("%s Does not loading tele xgg/ygg data from eeprom.", __func__);
 			}
 #endif /* CAMERA_2ND_OIS */
-
-			/* This function is no longer used. Disable it as requested */
-			is_mcu_set_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_ENABLE_DUALCAL, 0x00);
+			/* Enable dualcal for ois_center_shift */
+			is_mcu_set_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_ENABLE_DUALCAL, 0x01);
 
 			wx_pole = common_mcu_infos.ois_gyro_direction[0];
 			wy_pole = common_mcu_infos.ois_gyro_direction[1];
@@ -1131,6 +1128,31 @@ int ois_mcu_deinit(struct v4l2_subdev *subdev)
 	return ret;
 }
 
+#if defined(RESET_OIS_WHEN_AUTOTEST_FAILED) || defined(RESET_OIS_WHEN_SELFTEST_FAILED) || defined(RESET_OIS_WHEN_CALIBRATIONTEST_FAILED)
+static void ois_mcu_reset(bool is_factory)
+{
+	struct is_core *core = NULL;
+	struct ois_mcu_dev *mcu = NULL;
+	struct is_device_sensor *device;
+
+	info_mcu("%s : E\n", __func__);
+
+	core = is_get_is_core();
+	mcu = core->mcu;
+	device = &core->sensor[0];
+
+	ois_mcu_runtime_suspend(mcu->dev);
+	ois_mcu_runtime_resume(mcu->dev);
+
+	if (is_factory)
+		ois_mcu_init_factory(device->subdev_mcu);
+	else
+		ois_mcu_init(device->subdev_mcu);
+
+	info_mcu("%s : x\n", __func__);
+}
+#endif
+
 int ois_mcu_set_ggfadeupdown(struct v4l2_subdev *subdev, int up, int down)
 {
 	int ret = 0;
@@ -1391,26 +1413,59 @@ p_err:
 	return ret;
 }
 
+#ifdef USE_OIS_DEBUGGING_LOG
+void ois_mcu_debug_log(struct ois_mcu_dev *mcu)
+{
+	u8 status, err1, err2;
+	status = (u8)is_mcu_get_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_STATUS);
+	err1 = (u8)is_mcu_get_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_ERROR_STATUS);
+	err2 = (u8)is_mcu_get_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_CHECKSUM);
+	info_mcu("Err status (%02X,%02X,%02X)\n", status, err1, err2);
+}
+#endif
+
 int ois_mcu_self_test(struct is_core *core)
 {
 	u8 val = 0;
 	u8 reg_val = 0, x = 0, y = 0, z = 0;
 	u16 x_gyro_log = 0, y_gyro_log = 0, z_gyro_log = 0;
 	int retries = 30;
+#ifdef RESET_OIS_WHEN_SELFTEST_FAILED
+	int retries_reset = 2;
+#endif
 	struct ois_mcu_dev *mcu = NULL;
 
 	info_mcu("%s : E\n", __func__);
 
 	mcu = core->mcu;
+#ifdef USE_OIS_DEBUGGING_LOG
+	ois_mcu_debug_log(mcu);
+#endif
+#ifdef RESET_OIS_WHEN_SELFTEST_FAILED
+retry_selftest:
+#endif
+	retries = 30;
 
 	is_mcu_set_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_GYRO_CAL, 0x08);
 
 	do {
 		val = is_mcu_get_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_GYRO_CAL);
-		 msleep(50);
+		msleep(50);
 		if (--retries < 0) {
 			err("Read register failed!!!!, data = 0x%04x\n", val);
+#ifdef USE_OIS_DEBUGGING_LOG
+			ois_mcu_debug_log(mcu);
+#endif
+#ifdef RESET_OIS_WHEN_SELFTEST_FAILED
+			if (--retries_reset < 0) {
+				break;
+			} else {
+				ois_mcu_reset(1);
+				goto retry_selftest;
+			}
+#else
 			break;
+#endif
 		}
 	} while (val);
 
@@ -1681,6 +1736,9 @@ bool ois_mcu_sine_wavecheck_all(struct is_core *core,
 {
 	u8 buf[2] = {0, }, val = 0;
 	int retries = 10;
+#ifdef RESET_OIS_WHEN_AUTOTEST_FAILED
+	int retries_reset = 2;
+#endif
 	int sinx_count = 0, siny_count = 0;
 #if defined(CAMERA_2ND_OIS)
 	int sinx_count_2nd = 0, siny_count_2nd = 0;
@@ -1715,13 +1773,25 @@ bool ois_mcu_sine_wavecheck_all(struct is_core *core,
 	is_mcu_set_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_VYVLE_LEV, 0x02); /* vyvle level for measurement. */
 	is_mcu_set_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_START_WAVE_CHECK, 0x01); /* start sine wave check operation */
 
+#ifdef RESET_OIS_WHEN_AUTOTEST_FAILED
+retry_autotest:
+#endif
 	retries = 22;
 	do {
 		val = is_mcu_get_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_START_WAVE_CHECK);
 		msleep(100);
 		if (--retries < 0) {
 			err("sine wave operation fail, val = 0x%02x.\n", val);
+#ifdef RESET_OIS_WHEN_AUTOTEST_FAILED
+			if (--retries_reset < 0) {
+				break;
+			} else {
+				ois_mcu_reset(1);
+				goto retry_autotest;
+			}
+#else
 			break;
+#endif
 		}
 	} while (val);
 
@@ -2441,15 +2511,20 @@ bool ois_mcu_offset_test(struct is_core *core, long *raw_data_x, long *raw_data_
 	mcu = core->mcu;
 
 	info_mcu("%s : E\n", __func__);
-
+#ifdef USE_OIS_DEBUGGING_LOG
+	ois_mcu_debug_log(mcu);
+#endif
 	is_mcu_set_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_GYRO_CAL, 0x01);
 
 	retries = avg_count;
 	do {
 		val = (u8)is_mcu_get_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_GYRO_CAL);
-		 msleep(50);
+		msleep(50);
 		if (--retries < 0) {
 			err("Read register failed!!!!, data = 0x%04x\n", val);
+#ifdef USE_OIS_DEBUGGING_LOG
+			ois_mcu_debug_log(mcu);
+#endif
 			break;
 		}
 	} while (val);
@@ -3124,41 +3199,32 @@ int ois_mcu_set_coef(struct v4l2_subdev *subdev, u8 coef)
 	return ret;
 }
 
-int ois_mcu_shift(struct v4l2_subdev *subdev)
+void ois_mcu_set_center_shift(struct v4l2_subdev *subdev, int16_t *shiftValue)
 {
-	struct is_ois *ois = NULL;
-	struct ois_mcu_dev *mcu = NULL;
-	struct is_mcu *is_mcu = NULL;
+	int i = 0;
+	int j = 0;
 	u8 data[2];
-	int ret = 0;
+	struct ois_mcu_dev *mcu = NULL;
+
+	WARN_ON(!subdev);
 
 	mcu = (struct ois_mcu_dev *)v4l2_get_subdevdata(subdev);
 	if (!mcu) {
 		err("%s, mcu is NULL", __func__);
-		ret = -EINVAL;
-		return ret;
+		return;
 	}
 
-	is_mcu = (struct is_mcu *)v4l2_get_subdev_hostdata(subdev);
-	if (!is_mcu) {
-		err("%s, is_mcu is NULL", __func__);
-		ret = -EINVAL;
-		return ret;
+	info_mcu("%s wide x = %hd, wide y = %hd, tele x = %hd, tele y = %hd, tele2 x = %hd, tele2 y = %hd",
+		__func__, shiftValue[0], shiftValue[1], shiftValue[2], shiftValue[3], shiftValue[4], shiftValue[5]);
+
+	for (i = 0; i < 6; i++) {
+		data[0] = shiftValue[i] & 0xFF;
+		data[1] = (shiftValue[i] >> 8) & 0xFF;
+		is_mcu_set_reg_u8(mcu->regs[OM_REG_CORE],
+			R_OIS_CMD_XCOEF_M1_1 + j++, data[0]);
+		is_mcu_set_reg_u8(mcu->regs[OM_REG_CORE],
+			R_OIS_CMD_XCOEF_M1_1 + j++, data[1]);
 	}
-
-	ois = is_mcu->ois;
-
-	data[0] = (ois_center_x & 0xFF);
-	data[1] = (ois_center_x & 0xFF00) >> 8;
-	is_mcu_set_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_CENTER_X1, data[0]);
-	is_mcu_set_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_CENTER_X2, data[1]);
-
-	data[0] = (ois_center_y & 0xFF);
-	data[1] = (ois_center_y & 0xFF00) >> 8;
-	is_mcu_set_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_CENTER_Y1, data[0]);
-	is_mcu_set_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_CENTER_Y2, data[1]);
-
-	return ret;
 }
 
 int ois_mcu_set_centering(struct v4l2_subdev *subdev)
@@ -3244,6 +3310,9 @@ bool ois_mcu_gyro_cal(struct is_core *core, long *x_value, long *y_value, long *
 {
 	u8 val = 0, x = 0, y = 0, z = 0;
 	int retries = 30;
+#ifdef RESET_OIS_WHEN_CALIBRATIONTEST_FAILED
+	int retries_reset = 2;
+#endif
 	int scale_factor = OIS_GYRO_SCALE_FACTOR;
 	int x_sum = 0, y_sum = 0, z_sum = 0;
 	bool result = false;
@@ -3256,13 +3325,16 @@ bool ois_mcu_gyro_cal(struct is_core *core, long *x_value, long *y_value, long *
 	/* check ois status */
 	do {
 		val = (u8)is_mcu_get_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_STATUS);
-		 msleep(20);
+		msleep(20);
 		if (--retries < 0) {
 			err_mcu("%s Read status failed!!!!, data = 0x%04x\n", __func__, val);
 			return false;
 		}
 	} while (val != 0x01);
 
+#ifdef RESET_OIS_WHEN_CALIBRATIONTEST_FAILED
+retry_calibrationtest:
+#endif
 	retries = 30;
 
 	is_mcu_set_reg_u8(mcu->regs[OM_REG_CORE], R_OIS_CMD_GYRO_CAL, 0x01);
@@ -3272,7 +3344,16 @@ bool ois_mcu_gyro_cal(struct is_core *core, long *x_value, long *y_value, long *
 		msleep(15);
 		if (--retries < 0) {
 			err("Read register failed!!!!, data = 0x%04x\n", val);
+#ifdef RESET_OIS_WHEN_CALIBRATIONTEST_FAILED
+			if (--retries_reset < 0) {
+				break;
+			} else {
+				ois_mcu_reset(1);
+				goto retry_calibrationtest;
+			}
+#else
 			break;
+#endif
 		}
 	} while (val);
 
@@ -3744,7 +3825,6 @@ static struct is_ois_ops ois_ops_mcu = {
 	.ois_read_cal_checksum = ois_mcu_read_cal_checksum,
 	.ois_set_coef = ois_mcu_set_coef,
 	//.ois_read_fw_ver = is_mcu_read_fw_ver, //TEMP_2020
-	.ois_center_shift = ois_mcu_shift,
 	.ois_set_center = ois_mcu_set_centering,
 	.ois_read_mode = ois_mcu_read_mode,
 	.ois_calibration_test = ois_mcu_gyro_cal,
@@ -3762,6 +3842,7 @@ static struct is_ois_ops ois_ops_mcu = {
 	.ois_get_active = ois_mcu_get_active,
 	.ois_read_ext_clock = ois_mcu_read_ext_clock,
 	.ois_parsing_raw_data = ois_mcu_parsing_raw_data,
+	.ois_center_shift = ois_mcu_set_center_shift,
 };
 
 #ifdef CONFIG_USE_OIS_TAMODE_CONTROL
@@ -4149,6 +4230,7 @@ static int ois_mcu_probe(struct platform_device *pdev)
 	}
 	ois_tamode_status = false;
 	ois_tamode_onoff = false;
+
 #endif
 
 	probe_info("[@] %s device probe success\n", dev_name(mcu->dev));

@@ -205,6 +205,14 @@
 	{feature_safeplace_path,"/vendor/bin/aee_aedv64"},
 	{feature_safeplace_path,"/vendor/bin/meta_tst"},
 	{feature_safeplace_path,"/vendor/bin/thermal_core"},
+	{feature_safeplace_path,"/system/bin/oem-iptables-init.sh"},
+	{feature_safeplace_path,"/system_ext/bin/aee_aed64_v2"},
+	{feature_safeplace_path,"/system_ext/bin/aee_v2"},
+	{feature_safeplace_path,"/vendor/bin/aee_aedv64_v2"},
+	{feature_safeplace_path,"/vendor/bin/aee_dumpstatev_v2"},
+	{feature_safeplace_path,"/vendor/bin/dmabuf_dump"},
+	{feature_safeplace_path,"/vendor/bin/mrdump_tool"},
+	{feature_safeplace_path,"/vendor/bin/hw/vendor.mediatek.hardware.mtkpower@1.0-service"},
 	{feature_safeplace_path,"/system/bin/linkerconfig"},
 	{feature_safeplace_path,"/system/bin/snapshotctl"},
 	{feature_safeplace_path,"/system/bin/boringssl_self_test32"},
@@ -253,6 +261,7 @@
 	{feature_safeplace_path,"/system/bin/install-recovery.sh"},	/* DEFAULT */
 	{feature_safeplace_path,"/vendor/bin/install-recovery.sh"},	/* DEFAULT */
 	{feature_safeplace_path,"/system/bin/bpfloader"},	/* DEFAULT */
+	{feature_immutable_path_write,"/vendor/bin/hw/vendor.samsung.hardware.camera.provider-service_64"},
 	{feature_immutable_path_write,"/system/"},	/* DEFAULT */
 	{feature_immutable_path_write,"/vendor/"},	/* DEFAULT */
 	{feature_immutable_path_open,"/system/bin/"},	/* DEFAULT */
@@ -275,6 +284,7 @@
 	{feature_immutable_src_exception,"/init"},
 	{feature_immutable_src_exception,"/system/bin/init"},
 	{feature_immutable_src_exception,"/system/bin/lshal"},
+	{feature_immutable_src_exception,"/vendor/bin/hw/android.hardware.biometrics.face@2.0-service"},
 	{feature_immutable_src_exception,"/apex/com.android.runtime/bin/crash_dump32"},	/* DEFAULT */
 	{feature_immutable_src_exception,"/apex/com.android.runtime/bin/crash_dump64"},	/* DEFAULT */
 	{feature_immutable_src_exception,"/data/local/tests/unrestricted/CtsBionicTestCases/arm64/CtsBionicTestCases"},	/* DEFAULT */

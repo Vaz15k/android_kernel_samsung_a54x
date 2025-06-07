@@ -141,15 +141,63 @@ int sensor_jn1_cis_log_status(struct v4l2_subdev *subdev)
 }
 
 #if WRITE_SENSOR_CAL_FOR_HW_GGC
+int sensor_jn1_cis_write16_burst(struct i2c_client *client, u16 addr, u8 *val, u32 num)
+{
+	int ret = 0;
+	struct i2c_msg msg[1];
+	u8 *wbuf;
+
+	if (val == NULL) {
+		pr_err("val array is null\n");
+		ret = -ENODEV;
+		goto p_err;
+	}
+
+	if (!client->adapter) {
+		pr_err("Could not find adapter!\n");
+		ret = -ENODEV;
+		goto p_err;
+	}
+
+	wbuf = kmalloc((2 + (num * 2)), GFP_KERNEL);
+	if (!wbuf) {
+		ret = -ENODEV;
+		goto p_err;
+	}
+
+	msg->addr = client->addr;
+	msg->flags = 0;
+	msg->len = 2 + (num * 2);
+	msg->buf = wbuf;
+	wbuf[0] = (addr & 0xFF00) >> 8;
+	wbuf[1] = (addr & 0xFF);
+
+	memcpy(wbuf + 2, val, num * 2);
+
+	ret = is_i2c_transfer(client->adapter, msg, 1);
+	if (ret < 0) {
+		pr_err("i2c transfer fail(%d)", ret);
+		goto p_err_free;
+	}
+
+	kfree(wbuf);
+	return 0;
+
+p_err_free:
+	kfree(wbuf);
+p_err:
+	return ret;
+}
+
 int sensor_jn1_cis_HW_GGC_write(struct v4l2_subdev *subdev)
 {
 	int ret = 0;
-	int i = 0;
 	struct is_cis *cis = sensor_cis_get_cis(subdev);
 
+	ulong cal_addr;
+	u8 *cal_data = NULL;
 	char *rom_cal_buf = NULL;
-
-	u16 start_addr, data_size, write_data;
+	u16 start_addr, data_size, end_addr;
 
 	FIMC_BUG(!subdev);
 
@@ -158,10 +206,16 @@ int sensor_jn1_cis_HW_GGC_write(struct v4l2_subdev *subdev)
 		goto p_err;
 	}
 
+	cal_addr = (ulong)rom_cal_buf;
+
 	/* Big Endian */
+	cal_addr += SENSOR_JN1_HW_GGC_CAL_BASE_REAR;
 	start_addr = SENSOR_JN1_HW_GGC_CAL_BASE_REAR;
 	data_size = SENSOR_JN1_HW_GGC_CAL_SIZE;
 	rom_cal_buf += start_addr;
+
+	cal_data = (u8 *)cal_addr;
+	end_addr = start_addr + data_size;
 
 #if SENSOR_JN1_CAL_DEBUG
 	ret = sensor_jn1_cis_cal_dump(SENSOR_JN1_GGC_DUMP_NAME, (char *)rom_cal_buf, (size_t)SENSOR_JN1_HW_GGC_CAL_SIZE);
@@ -172,16 +226,20 @@ int sensor_jn1_cis_HW_GGC_write(struct v4l2_subdev *subdev)
 #endif
 
 	if (rom_cal_buf[0] == 0xFF && rom_cal_buf[1] == 0x00) {
+		cis->ixc_ops->write16(cis->client, 0x6004, 0x0001);
 		cis->ixc_ops->write16(cis->client, 0x6028, 0x2400);
 		cis->ixc_ops->write16(cis->client, 0x602A, 0x0CFC);
-		
-		for (i = 0; i < (data_size/2) ; i++) {
-			write_data = ((rom_cal_buf[2*i] << 8) | rom_cal_buf[2*i + 1]);
-			cis->ixc_ops->write16(cis->client, 0x6F12, write_data);
+
+		ret = sensor_jn1_cis_write16_burst(cis->client, 0x6F12,
+			cal_data, data_size / 2);
+		if (ret < 0) {
+			err("sensor_jn1_cis_write16_burst fail!!");
+			goto p_err;
 		}
 		cis->ixc_ops->write16(cis->client, 0x6028, 0x2400);
 		cis->ixc_ops->write16(cis->client, 0x602A, 0x2138);
 		cis->ixc_ops->write16(cis->client, 0x6F12, 0x4000);
+		cis->ixc_ops->write16(cis->client, 0x6004, 0x0000);
 	} else {
 		err("sensor_jn1_cis_GGC_write skip : (%#x, %#x) \n", rom_cal_buf[0] , rom_cal_buf[1]);
 		goto p_err;

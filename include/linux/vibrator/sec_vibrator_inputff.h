@@ -86,12 +86,13 @@ struct sec_vib_inputff_compose {
 	struct task_struct *compose_thread;
 	struct kthread_worker kworker;
 	struct kthread_work kwork;
-	int thread_exit;
-	int thread_state;
 	wait_queue_head_t delay_wait;
 	int num_of_compose_effects;
 	int upload_compose_effect;
 	int compose_effect_id;
+	u32 pattern_idx;
+	int curr_effect;
+	int effect_state;
 	int compose_repeat;
 };
 
@@ -141,6 +142,7 @@ struct sec_vib_inputff_drvdata {
 	u16 effect_gain;
 	struct sec_vib_inputff_compose_effects effects[MAX_COMPOSE_EFFECT];
 	struct sec_vib_inputff_compose compose;
+	struct hrtimer compose_effects_timer;
 };
 
 /* firmware load status. if fail, return err number */

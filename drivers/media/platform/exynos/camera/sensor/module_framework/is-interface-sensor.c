@@ -2646,6 +2646,11 @@ int request_flash(struct is_sensor_interface *itf,
 		return -ENXIO;
 	}
 
+	if (!sensor_peri->cis.cis_data->stream_on) {
+		err("[%s] Do not update flash value.Stream is already turned off.\n", __func__);
+		goto p_err;
+	}
+
 	flash = sensor_peri->flash;
 
 	vsync_cnt = get_vsync_count(itf);
@@ -4146,8 +4151,36 @@ u32 update_latest_seamless_state(struct is_sensor_interface *itf)
 
 int get_delayed_preflash_time(struct is_sensor_interface *itf, u32 *delayedTime)
 {
-	// Need to change
-	return 0;
+	int ret = 0;
+#ifdef USE_LEDS_FLASH_CHARGING_VOLTAGE_CONTROL
+	struct is_device_sensor_peri *sensor_peri = NULL;
+	struct v4l2_subdev *subdev_flash;
+	struct v4l2_control ctrl;
+
+	WARN_ON(!itf);
+	WARN_ON(itf->magic != SENSOR_INTERFACE_MAGIC);
+
+	sensor_peri = container_of(itf, struct is_device_sensor_peri, sensor_interface);
+	WARN_ON(!sensor_peri);
+
+	subdev_flash = sensor_peri->subdev_flash;
+
+	ctrl.id = V4L2_CID_FLASH_GET_DELAYED_PREFLASH_TIME;
+	ctrl.value = 0;
+	ret = v4l2_subdev_call(subdev_flash, core, ioctl, SENSOR_IOCTL_FLS_G_CTRL,&ctrl);
+	if (ret) {
+		dbg_flash("[%s] get fail (%d)\n", __func__, ret);
+		ret = -1;
+		goto p_err;
+	} else {
+		*delayedTime = (u32)ctrl.value;
+	}
+
+	dbg_flash("[%s] delayedTime(%d)\n", __func__, ctrl.value);
+
+p_err:
+#endif
+	return ret;
 }
 
 /* Dummy APIs for virtual(zebu) sensor env. */

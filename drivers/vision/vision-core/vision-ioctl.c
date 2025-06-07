@@ -545,7 +545,7 @@ get_vs4l_profiler_node_child(struct vs4l_profiler *kp, bool chk_compat)
 	}
 
 	// NPU & DSP HW node
-	for (done_cnt = 0; done_cnt < 2; done_cnt++) {
+	for (done_cnt = 0; done_cnt < 3; done_cnt++) {
 		if (!child[done_cnt]) continue;
 
 		tmpkp = copy_from_usr_vs4l((void __user *) child[done_cnt],
@@ -1125,9 +1125,13 @@ static long __vertex_ioctl(struct file *file, unsigned int cmd,
 				cmd, arg);
 		break;
 	}
-	temp = ktime_to_us(ktime_get_boottime()) - now;
-	npu_profile[type].duration += temp;
-	npu_profile[type].type = type;
+
+	if (type < PROFILE_ARRAY_SIZE) {
+		temp = ktime_to_us(ktime_get_boottime()) - now;
+		npu_profile[type].duration += temp;
+		npu_profile[type].type = type;
+	}
+
 	npu_log_ioctl_set_date(cmd, 1);
 	return ret;
 }

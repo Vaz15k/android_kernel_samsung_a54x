@@ -407,8 +407,7 @@ static int npu_vertex_flush(struct file *file)
 	struct npu_vertex_ctx *vctx = file->private_data;
 	struct npu_session *session = container_of(
 			vctx, struct npu_session, vctx);
-	struct npu_vertex *vertex = vctx->vertex;
-	struct mutex *lock = &vertex->lock;
+	struct mutex *lock = &vctx->lock;
 
 	if (fatal_signal_pending(current) || (current->exit_code != 0)) {
 		mutex_lock(lock);
@@ -957,14 +956,13 @@ static int __npu_vertex_bootup(struct file *file, struct vs4l_ctrl *ctrl)
 
 	info = npu_scheduler_get_info();
 
-	session->hids = ctrl->value;
 #if !IS_ENABLED(CONFIG_DSP_USE_VS4L)
 	if (ctrl->value == NPU_HWDEV_ID_DSP) {
 		npu_err("recv err cmd\n");
 		return -EINVAL;
 	}
 #endif
-
+	session->hids = ctrl->value;
 	/* check npu_device emergency error */
 	ret = check_emergency_vctx(vctx);
 	if (ret)

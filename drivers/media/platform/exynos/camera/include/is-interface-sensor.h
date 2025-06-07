@@ -774,7 +774,6 @@ struct is_ois_ops {
 	int (*ois_read_fw_ver)(struct is_core *core, char *name, char *ver);
 #endif
 #endif
-	int (*ois_center_shift)(struct v4l2_subdev *subdev);
 	int (*ois_set_center)(struct v4l2_subdev *subdev);
 	u8 (*ois_read_mode)(struct v4l2_subdev *subdev);
 #if defined (CONFIG_CAMERA_USE_MCU) || defined (CONFIG_CAMERA_USE_INTERNAL_MCU)
@@ -793,6 +792,7 @@ struct is_ois_ops {
 	bool(*ois_get_active)(void);
 	int(*ois_read_ext_clock)(struct v4l2_subdev *subdev, u32 *clock);
 	void(*ois_parsing_raw_data)(uint8_t *buf, long efs_size, long *raw_data_x, long *raw_data_y, long *raw_data_z);
+	void (*ois_center_shift)(struct v4l2_subdev *subdev, int16_t *value);
 };
 
 struct is_sensor_interface;

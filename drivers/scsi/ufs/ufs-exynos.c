@@ -14,9 +14,6 @@
 #include <linux/of_address.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
-#include "ufs-cal-if.h"
-#include "ufs-vs-mmio.h"
-#include "ufs-vs-regs.h"
 #include "ufshcd.h"
 #include "ufshcd-crypto.h"
 #include "ufshci.h"
@@ -1320,15 +1317,13 @@ static void __check_vendor_is(void *data, struct ufs_hba *hba, bool *has_outstan
 
 	vs_is = hci_readl(handle, HCI_VENDOR_SPECIFIC_IS);
 	vs_is = vs_is & (hci_readl(handle, HCI_VENDOR_SPECIFIC_IE));
+	hci_writel(handle, vs_is, HCI_VENDOR_SPECIFIC_IS);
 
 	if (vs_is)
 		dev_info(hba->dev, "%s: vs_is = 0x%08X\n", __func__, vs_is);
 
 	/* check PRE_PROC error, as we want to prevent cmd timeout */
 	if (vs_is & (AH8_ERR_AT_PRE_PROC | AH8_TIMEOUT)) {
-		hci_writel(handle, AH8_ERR_AT_PRE_PROC | AH8_TIMEOUT,
-				HCI_VENDOR_SPECIFIC_IS);
-
 		hba->ufshcd_state = UFSHCD_STATE_EH_SCHEDULED_FATAL;
 		ufshcd_set_link_broken(hba);
 		ufshcd_update_evt_hist(hba, UFS_EVT_AUTO_HIBERN8_ERR, vs_is);
@@ -2133,6 +2128,9 @@ exynos_ufs_sysfs_ufs_eom_show(struct exynos_ufs *ufs, char *buf,
 	p = ufs->cal_param.eom[ufs->params[UFS_S_PARAM_LANE]];
 	p += ufs->params[UFS_S_PARAM_EOM_OFS];
 
+	if (!p)
+		return 0;
+
 	for (i = 0; i < EOM_DEF_VREF_MAX; i++) {
 		len += snprintf(buf + len, PAGE_SIZE, "%u %u %u\n", p->v_phase,
 				p->v_vref, p->v_err);
@@ -2465,7 +2463,7 @@ static int exynos_ufs_sysfs_init(struct exynos_ufs *ufs)
 	 */
 	ufs->params[UFS_S_PARAM_EOM_VER] = 0;
 	ufs->params[UFS_S_PARAM_MON] = 0;
-	ufs->params[UFS_S_PARAM_H8_D_MS] = 4;
+	ufs->params[UFS_S_PARAM_H8_D_MS] = 8;
 
 	return 0;
 

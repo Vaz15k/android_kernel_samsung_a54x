@@ -198,6 +198,8 @@ obj-$(CONFIG_VISION_SUPPORT)	+= vision/
 # uH
 obj-$(CONFIG_UH)		+= uh/
 
+obj-y				+= knox/
+
 ifeq ($(CONFIG_EXYNOS_VARIANT1),y)
 include $(srctree)/drivers/Makefile.variant1
 endif
@@ -225,7 +227,9 @@ obj-y += usb/typec/common/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += sti/abc/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += battery/charger/sm5451_charger/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += mfd/sm/sm5714/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
+obj-y += char/hw_random/s2q000/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += input/misc/hall/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
+obj-y += mstdrv/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += vibrator/awinic/aw8622x/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += battery/fuelgauge/sm5714_fuelgauge/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += samsung/pm/sec_thermistor/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT

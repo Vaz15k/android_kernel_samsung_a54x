@@ -738,6 +738,12 @@ static void decon_update_plane(struct exynos_drm_crtc *exynos_crtc,
 	if (zpos == 0 && hw_alpha == EXYNOS_PLANE_ALPHA_MAX)
 		win_info.blend = DRM_MODE_BLEND_PIXEL_NONE;
 
+	/* When MUL_EN is enabled, HDR IP converts Premultiplied into De-premultiplied */
+	if (exynos_plane_state->hdr_en &&
+		exynos_plane_state->hdr_depre_en &&
+		win_info.blend == DRM_MODE_BLEND_PREMULTI)
+		win_info.blend = DRM_MODE_BLEND_COVERAGE;
+
 	/* disable previous window if zpos has changed */
 	if (exynos_plane->win_id != win_id)
 		decon_disable_win(decon, exynos_plane->win_id);

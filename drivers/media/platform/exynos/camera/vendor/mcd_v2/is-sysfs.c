@@ -2673,6 +2673,46 @@ static ssize_t camera_ois_check_valid_show(struct device *dev,
 	}
 }
 
+static ssize_t camera_ois_center_shift_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	int ret = 0;
+	int16_t shiftValue[7] = {0, };
+	struct is_core *core = is_get_is_core();
+	bool camera_running;
+#if defined(CAMERA_2ND_OIS)
+	bool camera_running2;
+#endif
+#if defined(CAMERA_3RD_OIS)
+	bool camera_running3;
+#endif
+	
+	camera_running = is_vendor_check_camera_running(SENSOR_POSITION_REAR);
+#if defined(CAMERA_2ND_OIS)
+	camera_running2 = is_vendor_check_camera_running(SENSOR_POSITION_REAR2);
+#endif
+#if defined(CAMERA_3RD_OIS)
+	camera_running3 = is_vendor_check_camera_running(SENSOR_POSITION_REAR4);
+#endif
+
+	ret = sscanf(buf, "%hd,%hd,%hd,%hd,%hd,%hd",
+		&shiftValue[0], &shiftValue[1], &shiftValue[2], &shiftValue[3], &shiftValue[4], &shiftValue[5]);
+
+	if (camera_running
+#ifdef CAMERA_2ND_OIS
+		|| camera_running2
+#endif
+#ifdef CAMERA_3RD_OIS
+		|| camera_running3
+#endif
+		|| check_ois_power)
+		is_ois_set_center_shift(core, shiftValue);
+	else
+		err("Camera power is not enabled.");
+
+	return count;
+}
+
 static ssize_t camera_ois_read_ext_clock_show(struct device *dev,
 				    struct device_attribute *attr, char *buf)
 {
@@ -3379,6 +3419,7 @@ static DEVICE_ATTR(prevent_shaking_noise, S_IWUSR, NULL, camera_ois_shaking_nois
 static DEVICE_ATTR(check_cross_talk, S_IRUGO, camera_ois_check_cross_talk_show, NULL);
 static DEVICE_ATTR(check_hall_cal, S_IRUGO, camera_ois_check_hall_cal_show, NULL);
 static DEVICE_ATTR(check_ois_valid, S_IRUGO, camera_ois_check_valid_show, NULL);
+static DEVICE_ATTR(ois_center_shift, S_IWUSR, NULL, camera_ois_center_shift_store);
 static DEVICE_ATTR(ois_ext_clk, S_IRUGO, camera_ois_read_ext_clock_show, NULL);
 #endif
 #ifdef FORCE_CAL_LOAD
@@ -3694,6 +3735,7 @@ static struct attribute *is_sysfs_attr_entries_ois[] = {
 	&dev_attr_check_cross_talk.attr,
 	&dev_attr_check_hall_cal.attr,
 	&dev_attr_check_ois_valid.attr,
+	&dev_attr_ois_center_shift.attr,
 	&dev_attr_ois_ext_clk.attr,
 #ifdef CAMERA_2ND_OIS
 	&dev_attr_rear3_read_cross_talk.attr,

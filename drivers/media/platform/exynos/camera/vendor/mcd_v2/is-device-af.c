@@ -250,6 +250,41 @@ int is_af_check_init_state(struct is_actuator *actuator, struct i2c_client *clie
 	return ret;
 }
 
+#if defined(SKIP_AF_MOVE_FOR_DW_ACTUATOR_IN_OIS_AUTOTEST)
+enum {
+	IS_AF_AK_MODULE,
+	IS_AF_DW_MODULE,
+	IS_AF_ELSE_MODULE,
+};
+
+int is_af_get_module(int act_id) {
+	switch (act_id) {
+	case ACTUATOR_NAME_AK7343:
+	case ACTUATOR_NAME_AK7345:
+	case ACTUATOR_NAME_AK7348:
+	case ACTUATOR_NAME_AK7371:
+	case ACTUATOR_NAME_AK7372:
+	case ACTUATOR_NAME_AK7371_DUAL:
+	case ACTUATOR_NAME_AK737X:
+		return IS_AF_AK_MODULE;
+	case ACTUATOR_NAME_DWXXXX:
+	case ACTUATOR_NAME_DW9804:
+	case ACTUATOR_NAME_DW9807:
+	case ACTUATOR_NAME_DW9780:
+	case ACTUATOR_NAME_DW9823:
+	case ACTUATOR_NAME_DW9839:
+	case ACTUATOR_NAME_DW9808:
+	case ACTUATOR_NAME_DW9817:
+	case ACTUATOR_NAME_DW9800:
+	case ACTUATOR_NAME_DW9714:
+	case ACTUATOR_NAME_DW9818:
+		return IS_AF_DW_MODULE;
+	default :
+		return IS_AF_ELSE_MODULE;
+	}
+}
+#endif
+
 int16_t is_af_move_lens(struct is_core *core, int position)
 {
 	int ret = 0;
@@ -258,7 +293,9 @@ int16_t is_af_move_lens(struct is_core *core, int position)
 	struct is_device_sensor *device;
 	struct is_module_enum *module;
 	int sensor_id = 0;
-
+#if defined(SKIP_AF_MOVE_FOR_DW_ACTUATOR_IN_OIS_AUTOTEST)
+	int actuator_id = 0;
+#endif
 	is_vendor_get_module_from_position(position, &module);
 	if (!module) {
 		err("%s, module is NULL", __func__);
@@ -267,7 +304,14 @@ int16_t is_af_move_lens(struct is_core *core, int position)
 	}
 
 	sensor_id = module->pdata->id;
-
+#if defined(SKIP_AF_MOVE_FOR_DW_ACTUATOR_IN_OIS_AUTOTEST)
+	actuator_id = module->pdata->af_product_name;
+	if (is_af_get_module(actuator_id) == IS_AF_DW_MODULE) {
+		/* The actuator's position is already at where it should be for DW MODULE */
+		info("[%s] Skip is_af_move_lens (sensor_id = %d)\n", __func__, sensor_id);
+		return ret;
+	}
+#endif
 	info("[%s] is_af_move_lens : sensor_id = %d\n", __func__, sensor_id);
 
 	device = &core->sensor[sensor_id];
@@ -309,6 +353,7 @@ int16_t is_af_move_lens(struct is_core *core, int position)
 
 	return ret;
 }
+
 int16_t is_af_move_lens_pos(struct is_core *core, int position, u32 val)
 {
 	int ret = 0;

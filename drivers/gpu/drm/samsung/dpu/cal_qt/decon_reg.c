@@ -715,6 +715,15 @@ static void dsc_reg_set_pps_58_59_rc_range_param0(u32 dsc_id, u32 rc_range)
 	dsc_write_mask(DSC_PPS56_59(dsc_id), val, mask);
 }
 
+static void dsc_reg_set_pps_60_61_rc_range_param1(u32 dsc_id, u32 rc_range)
+{
+	u32 val, mask;
+
+	val = PPS60_61_RC_RANGE_PARAM(rc_range);
+	mask = PPS60_61_RC_RANGE_PARAM_MASK;
+	dsc_write_mask(DSC_PPS60_63(dsc_id), val, mask);
+}
+
 /* full size default value */
 static u32 dsc_get_dual_slice_mode(struct exynos_dsc *dsc)
 {
@@ -903,6 +912,7 @@ static void dsc_calc_pps_info(struct decon_config *config, u32 dscc_en,
 	const u32 first_line_bpg_offset = 0x0c;
 	const u32 initial_offset = 0x1800;
 	const u32 rc_range_parameters = 0x0102;
+	const u32 rc_range_parameters_1 = 0x0100;
 
 	u32 final_offset, final_scale;
 	u32 flag, nfl_bpg_offset, slice_bpg_offset;
@@ -1024,6 +1034,7 @@ static void dsc_calc_pps_info(struct decon_config *config, u32 dscc_en,
 	dsc_enc->initial_offset = initial_offset;
 	dsc_enc->final_offset = final_offset;
 	dsc_enc->rc_range_parameters = rc_range_parameters;
+	dsc_enc->rc_range_parameters_1 = rc_range_parameters_1;
 
 	dsc_enc->width_per_enc = dsc_enc0_w;
 
@@ -1039,6 +1050,10 @@ static void dsc_calc_pps_info(struct decon_config *config, u32 dscc_en,
 			dsc_enc->final_offset = config->vendor_pps.final_offset;
 		if (config->vendor_pps.comp_cfg)
 			dsc_enc->comp_cfg = config->vendor_pps.comp_cfg;
+		if (config->vendor_pps.rc_range_parameters)
+			dsc_enc->rc_range_parameters = config->vendor_pps.rc_range_parameters;
+		if (config->vendor_pps.rc_range_parameters_1)
+			dsc_enc->rc_range_parameters_1 = config->vendor_pps.rc_range_parameters_1;
 	}
 }
 
@@ -1082,6 +1097,9 @@ static void dsc_reg_set_pps(u32 dsc_id, struct decon_dsc *dsc_enc)
 	/* min_qp0 = 0 , max_qp0 = 4 , bpg_off0 = 2 */
 	dsc_reg_set_pps_58_59_rc_range_param0(dsc_id,
 		dsc_enc->rc_range_parameters);
+
+	dsc_reg_set_pps_60_61_rc_range_param1(dsc_id,
+		dsc_enc->rc_range_parameters_1);
 
 #ifndef VESA_SCR_V4
 	/* PPS79 ~ PPS87 : 3HF4 is different with VESA SCR v4 */

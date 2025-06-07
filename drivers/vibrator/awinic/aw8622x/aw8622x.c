@@ -37,7 +37,7 @@
 #include "aw8622x_reg.h"
 #include "aw8622x.h"
 
-#define AW8622X_DRIVER_VERSION ("v0.0.0.8")
+#define AW8622X_DRIVER_VERSION ("v0.0.0.9")
 
 struct pm_qos_request aw8622x_pm_qos_req_vb;
 
@@ -78,7 +78,7 @@ static char aw8622x_rtp_name[][AW8622X_RTP_NAME_MAX] = {
 	/* 24 */	{"RTP24_RTP.bin"},
 	/* 25 */	{"RTP25_RTP.bin"},
 	/* 26 */	{"RESERVED_RTP.bin"},
-	/* 27 */	{"RESERVED_RTP.bin"},
+	/* 27 */	{"RTP27_RTP.bin"},
 	/* 28 */	{"RTP28_RTP.bin"},
 	/* 29 */	{"RTP29_RTP.bin"},
 	/* 30 */	{"RTP30_RTP.bin"},
@@ -87,9 +87,9 @@ static char aw8622x_rtp_name[][AW8622X_RTP_NAME_MAX] = {
 	/* 33 */	{"RTP33_RTP.bin"},
 	/* 34 */	{"RTP34_RTP.bin"},
 	/* 35 */	{"RTP35_RTP.bin"},
-	/* 36 */	{"RESERVED_RTP.bin"},
-	/* 37 */	{"RESERVED_RTP.bin"},
-	/* 38 */	{"RESERVED_RTP.bin"},
+	/* 36 */	{"RTP36_RTP.bin"},
+	/* 37 */	{"RTP37_RTP.bin"},
+	/* 38 */	{"RTP38_RTP.bin"},
 	/* 39 */	{"RTP39_RTP.bin"},
 	/* 40 */	{"RTP40_RTP.bin"},
 	/* 41 */	{"RTP41_RTP.bin"},
@@ -161,6 +161,8 @@ static char aw8622x_rtp_name[][AW8622X_RTP_NAME_MAX] = {
 	/* 107 */	{"RTP107_RTP.bin"},
 	/* 108 */	{"RTP108_RTP.bin"},
 	/* 109 */	{"RTP109_RTP.bin"},
+	/* 110 */	{"RTP110_RTP.bin"},
+	/* 111 */	{"RTP111_RTP.bin"},
 };
 
  /*

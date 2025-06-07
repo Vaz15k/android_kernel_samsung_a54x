@@ -115,6 +115,7 @@ struct exynos_drm_plane_state {
 	int64_t hdr_fd;
 	char *	hdr_ctx;
 	bool hdr_en;
+	bool hdr_depre_en;
 };
 
 static inline struct exynos_drm_plane_state *

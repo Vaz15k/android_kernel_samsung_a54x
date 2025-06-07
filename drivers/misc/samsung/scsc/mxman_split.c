@@ -2520,6 +2520,7 @@ static void mxman_close_without_lock(struct mxman *mxman, enum scsc_subsystem su
 static int __mxman_open(struct mxman *mxman, enum scsc_subsystem sub, void *data, size_t data_sz)
 {
 	int ret;
+	struct scsc_mif_abs *mif  = scsc_mx_get_mif_abs(mxman->mx);
 
 	SCSC_TAG_INFO(MXMAN, "Number of wlan_users=%d wpan_users=%d Maxwell state=%d\n", mxman->users, mxman->users_wpan, mxman->mxman_state);
 	if (mxman->users == 0 && mxman->users_wpan == 0 && mxman->mxman_state == MXMAN_STATE_STARTING)
@@ -2580,6 +2581,8 @@ static int __mxman_open(struct mxman *mxman, enum scsc_subsystem sub, void *data
 		if (ret) {
 			SCSC_TAG_ERR(MXMAN, "wait_for_MM_START_IND() for subsfailed: r=%d users_wlan=%d users_wpan=%d\n",
 				     ret, mxman->users, mxman->users_wpan);
+			if (mif->mif_dump_registers)
+				mif->mif_dump_registers(mif);
 #if IS_ENABLED(CONFIG_DEBUG_SNAPSHOT)
 			if (kernel_crash_on_service_fail) {
 				SCSC_TAG_WARNING(MXMAN, "WLBT FW failure - halt kernel 0x%x!\n", kernel_crash_on_service_fail);

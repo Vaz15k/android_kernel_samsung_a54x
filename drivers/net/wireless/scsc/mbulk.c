@@ -44,6 +44,7 @@ static inline void mbulk_debug(struct mbulk *m)
 struct mbulk_tracker {
 	mbulk_colour colour;
 };
+
 enum free_list_idx {
 	FIRST,
 	SECOND,
@@ -79,7 +80,7 @@ static inline struct mbulk *mbulk_pool_get(struct mbulk_pool *pool, enum mbulk_c
 
 	spin_lock_bh(&mbulk_pool_lock);
 	m = pool->free_list;
-	
+
 	if ((char *)m < pool->base_addr || (char *)m > pool->end_addr) {
 		SLSI_DBG3_NODEV(SLSI_MBULK, "Mbulk address is out of address boundary\n");
 
@@ -128,6 +129,7 @@ static inline struct mbulk *mbulk_pool_get(struct mbulk_pool *pool, enum mbulk_c
 				(struct mbulk *)((uintptr_t)track_free_list[pool->pid][SECOND]
 				+ track_free_list[pool->pid][SECOND]->next_offset);
 	}
+
 	memset(m, 0, sizeof(*m));
 	m->pid = pool->pid;
 	m->clas = clas;
@@ -174,7 +176,7 @@ static inline void mbulk_pool_put(struct mbulk_pool *pool, struct mbulk *m)
 		track_free_list[m->pid][SECOND] = NULL;
 	}
 	pool->free_list = m;
-	
+
 	spin_unlock_bh(&mbulk_pool_lock);
 }
 
@@ -524,6 +526,7 @@ int mbulk_pool_add(u8 pool_id, char *base, char *end, size_t seg_size, u8 guard)
 		pool->free_cnt++;
 		next = (struct mbulk *)((uintptr_t)next + byte_per_block);
 	}
+
 	m = pool->free_list;
 	track_free_list[pool_id][FIRST] = m;
 

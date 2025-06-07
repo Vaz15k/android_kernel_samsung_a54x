@@ -304,11 +304,11 @@ int is_vendor_select_mipi_by_rf_channel(const struct cam_mipi_channel *channel_l
 					compare_rf_channel);
 			if (result == NULL) {
 				info("%s: searching result : not found, use default mipi clock\n", __func__);
-				return 0; /* return default mipi clock index = 0 */
+				return -1;
 			}
 		} else {
 			info("%s: searching result : not found, use default mipi clock\n", __func__);
-			return 0; /* return default mipi clock index = 0 */
+			return -1;
 		}
 	}
 
@@ -439,6 +439,20 @@ int is_vendor_update_mipi_info(struct is_device_sensor *device)
 			info("%s - [pos:%d]update mipi rate : %d\n", __func__, device->position, device->cfg->mipi_speed);
 		} else {
 			err("[pos:%d]sensor setting size is out of bound", device->position);
+		}
+	} else {
+		if(cis->mipi_clock_index_new == CAM_MIPI_NOT_INITIALIZED){
+			found = 0; /* set default */
+			if (found < cur_mipi_sensor_mode->sensor_setting_size) {
+				info("%s: use default mipi clock\n", __func__);
+				device->cfg->mipi_speed = cur_mipi_sensor_mode->sensor_setting[found].mipi_rate;
+				cis->mipi_clock_index_new = found;
+				info("%s - [pos:%d]update mipi rate : %d\n", __func__, device->position, device->cfg->mipi_speed);
+			} else {
+				err("[pos:%d]sensor setting size is out of bound", device->position);
+			}
+		} else {
+			info("%s - [pos:%d]use mipi rate : %d\n", __func__, device->position, device->cfg->mipi_speed);
 		}
 	}
 

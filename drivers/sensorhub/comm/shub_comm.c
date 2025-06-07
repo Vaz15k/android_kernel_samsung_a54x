@@ -86,6 +86,14 @@ static void clean_msg(struct shub_msg *msg, bool buf_free)
 	kfree(msg);
 }
 
+static void delete_list(struct shub_msg *msg)
+{
+	mutex_lock(&pending_mutex);
+	if ((msg->list.next != NULL) && (msg->list.next != LIST_POISON1))
+		list_del(&msg->list);
+	mutex_unlock(&pending_mutex);
+}
+
 static int comm_to_sensorhub(struct shub_msg *msg)
 {
 	int ret;
@@ -171,10 +179,7 @@ int shub_send_command_wait(u8 cmd, u8 type, u8 subcmd, int timeout, char *send_b
 	ret = comm_to_sensorhub(msg);
 	if (ret < 0) {
 		shub_errf("comm_to_sensorhub FAILED.");
-
-		mutex_lock(&pending_mutex);
-		list_del(&msg->list);
-		mutex_unlock(&pending_mutex);
+		delete_list(msg);
 		goto exit;
 	}
 
@@ -185,15 +190,12 @@ int shub_send_command_wait(u8 cmd, u8 type, u8 subcmd, int timeout, char *send_b
 		msg->is_empty_pending_list = false;
 		goto exit;
 	}
-
 	/* when timeout happen */
 	if (!ret) {
 		bool is_shub_shutdown = !is_shub_working();
 
 		msg->done = NULL;
-		mutex_lock(&pending_mutex);
-		list_del(&msg->list);
-		mutex_unlock(&pending_mutex);
+		delete_list(msg);
 		cnt_timeout += (is_shub_shutdown) ? 0 : 1;
 
 		shub_errf("timeout(%d %d %d). cnt_timeout %d, shub_down %d", cmd, type, subcmd, cnt_timeout,

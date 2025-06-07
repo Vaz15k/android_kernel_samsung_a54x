@@ -50,7 +50,7 @@
  *  key_rsc (8, 65:72) + key_id(16, 73:80) + key_mic (16, 81:96) + key_data_length(2, 97:98) +
  *  keydata(key_data_length, 99:99+key_data_length)
  */
- 
+
 #define SLSI_EAPOL_IEEE8021X_TYPE_POS                       (1)
 #define SLSI_EAPOL_TYPE_POS                                 (4)
 #define SLSI_EAPOL_KEY_INFO_HIGHER_BYTE_POS                 (5)

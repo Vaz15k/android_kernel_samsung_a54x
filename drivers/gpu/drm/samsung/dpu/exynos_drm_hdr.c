@@ -323,6 +323,14 @@ static int hdr_dummy_remap(struct exynos_hdr *hdr)
 	return 0;
 }
 
+static bool IS_HDR_DEPRE_CONV_ACTIVATED(const struct hdr_coef_header *coef_h)
+{
+	return ((coef_h != NULL) &&
+		(coef_h->type.unpack.hw_type == HDR_HW_TYPE_1) &&
+		(coef_h->sfr_con.unpack.mod_en != 0) &&
+		(coef_h->sfr_con.unpack.mul_en != 0));
+}
+
 static int hdr_dummy_buffer(struct exynos_hdr *hdr,
 			struct exynos_drm_plane_state *exynos_plane_state)
 {
@@ -365,6 +373,7 @@ static int hdr_dummy_buffer(struct exynos_hdr *hdr,
 	}
 
 	exynos_plane_state->hdr_en = (coef_h->sfr_con.unpack.mod_en != 0);
+	exynos_plane_state->hdr_depre_en = IS_HDR_DEPRE_CONV_ACTIVATED(coef_h);
 	exynos_plane_state->hdr_ctx = ctx->data;
 
 	return 0;
@@ -400,6 +409,7 @@ static int hdr_prepare_buffer(struct exynos_hdr *hdr,
 
 	memcpy(ctx->data, (void *)hdr->vaddr, coef_h->total_bytesize);
 	exynos_plane_state->hdr_en = (coef_h->sfr_con.unpack.mod_en != 0);
+	exynos_plane_state->hdr_depre_en = IS_HDR_DEPRE_CONV_ACTIVATED(coef_h);
 	exynos_plane_state->hdr_ctx = ctx->data;
 
 	return 0;

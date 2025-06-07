@@ -25,6 +25,7 @@ enum slsi_ac_index_wmm_pe {
 #define SLSI_WLAN_EID_VENDOR_SPECIFIC 0xdd
 #define SLSI_WLAN_EID_INTERWORKING 107
 #define SLSI_WLAN_EID_EXTENSION 255
+
 /* Element ID Extension (EID 255) values */
 #define SLSI_WLAN_EID_EXT_OWE_DH_PARAM 32
 
@@ -233,6 +234,7 @@ struct ap_rps_params {
 #define SLSI_MLME_SUBTYPE_IPV4 0x01
 #define SLSI_MLME_SUBTYPE_IPV6 0x02
 #define SLSI_MLME_SUBTYPE_RESERVED 0x00
+
 #define SLSI_KEY_MGMT_PSK 0x000fac02
 #define SLSI_KEY_MGMT_PSK_SHA 0x000fac06
 #define SLSI_KEY_MGMT_FILS_SHA256 0x000fac0e
@@ -240,7 +242,9 @@ struct ap_rps_params {
 #define SLSI_KEY_MGMT_FT_FILS_SHA256 0x000fac10
 #define SLSI_KEY_MGMT_FT_FILS_SHA384 0x000fac11
 #define SLSI_KEY_MGMT_OWE 0x000fac12
+#define SLSI_KEY_MGMT_OWE_REV 0x12ac0f00
 #define SLSI_KEY_MGMT_802_1X_SUITE_B_192 0x000fac0c
+#define SLSI_KEY_MGMT_802_1X_SUITE_B_192_REV 0x0cac0f00
 #define SLSI_KEY_MGMT_FT_802_1X_SHA384 0x000fac0d
 
 struct slsi_mlme_parameters {
@@ -291,6 +295,23 @@ struct slsi_mlme_scan_6ghz_descriptor {
 } __packed;
 
 #endif
+struct slsi_mlme_sar_tx_power_limit {
+	u8 antenna1_2g4;
+	u8 antenna2_2g4;
+	u8 antenna1_2_2g4;
+	u8 antenna1_5g;
+	u8 antenna2_5g;
+	u8 antenna1_2_5g;
+	u8 antenna1_6g;
+	u8 antenna2_6g;
+	u8 antenna1_2_6g;
+};
+
+struct slsi_sar_avg_tx_power {
+	u8 antenna1;
+	u8 antenna2;
+	u16 long_window;
+};
 
 u16 slsi_get_chann_info(struct slsi_dev *sdev, struct cfg80211_chan_def *chandef);
 int slsi_check_channelization(struct slsi_dev *sdev, struct cfg80211_chan_def *chandef,
@@ -467,6 +488,11 @@ int slsi_modify_ies(struct net_device *dev, u8 eid, u8 *ies, int ies_len, u8 ie_
 int slsi_mlme_set_rssi_monitor(struct slsi_dev *sdev, struct net_device *dev, u8 enable, s8 low_rssi_threshold, s8 high_rssi_threshold);
 struct slsi_mib_value *slsi_read_mibs(struct slsi_dev *sdev, struct net_device *dev, struct slsi_mib_get_entry *mib_entries, int mib_count, struct slsi_mib_data *mibrsp);
 int slsi_mlme_set_host_state(struct slsi_dev *sdev, struct net_device *dev, u16 host_state);
+int slsi_mlme_sar_set_index(struct slsi_dev *sdev, struct net_device *dev, u8 cat2_dsi_id);
+int slsi_mlme_sar_get_tx_power_limit(struct slsi_dev *sdev, struct net_device *dev, u16 op_class, u8 dsi_id,
+				     struct slsi_mlme_sar_tx_power_limit *tx_pwr_limits);
+int slsi_mlme_sar_get_avg_tx_power(struct slsi_dev *sdev, struct net_device *dev, u8 dsi_id, u8 report_mode,
+				   struct slsi_sar_avg_tx_power *avg_tx_pwr);
 int slsi_mlme_read_apf_request(struct slsi_dev *sdev, struct net_device *dev, u8 **host_dst, int *datalen);
 int slsi_mlme_install_apf_request(struct slsi_dev *sdev, struct net_device *dev,
 				  u8 *program, u32 program_len);

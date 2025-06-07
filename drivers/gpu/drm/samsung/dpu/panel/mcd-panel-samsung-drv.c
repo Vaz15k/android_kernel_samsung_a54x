@@ -963,10 +963,18 @@ static void exynos_panel_parse_vendor_pps(struct device *dev, struct exynos_pane
 		&decon->config.vendor_pps.comp_cfg))
 		panel_info(ctx, "comp_cfg: %d\n", decon->config.vendor_pps.comp_cfg);
 
+	if (!of_property_read_u32(np, "SLSI,rc_range_parameters",
+		&decon->config.vendor_pps.rc_range_parameters))
+		panel_info(ctx, "rc_range_parameters: %d\n", decon->config.vendor_pps.rc_range_parameters);
+
+	if (!of_property_read_u32(np, "SLSI,rc_range_parameters_1",
+		&decon->config.vendor_pps.rc_range_parameters_1))
+		panel_info(ctx, "rc_range_parameters_1: %d\n", decon->config.vendor_pps.rc_range_parameters_1);
+
 	if (dsim != NULL) {
 		dsim->config.lp_force_en = of_property_read_bool(np, "SLSI,force-seperate-trans");
 		dsim->config.ignore_rx_trail = of_property_read_bool(np, "SLSI,ignore-rx-trail");
-		
+
 		panel_info(ctx, "lp_force_en: %d, ignore_rx_trail: %d\n", dsim->config.lp_force_en, dsim->config.ignore_rx_trail);
 	}
 }
@@ -1008,6 +1016,26 @@ static void exynos_panel_parse_vfp_detail(struct exynos_panel *ctx)
 				 &dsim->config.line_stable_vfp))
 		dsim->config.line_stable_vfp = 2;
 }
+
+static void exynos_panel_parse_using_dcs_short_write_param(struct exynos_panel *ctx)
+{
+	struct device_node *np;
+
+	if (!ctx->mcd_panel_dev) {
+		panel_err(ctx, "mcd_panel_dev has null\n");
+		return;
+	}
+
+	np = ctx->mcd_panel_dev->ap_vendor_setting_node;
+	if (!np) {
+		panel_err(ctx, "mcd_panel ddi-node is null\n");
+		return;
+	}
+
+	ctx->using_dcs_short_write_param = of_property_read_bool(np, "SLSI,using_dcs_short_write_param");
+	panel_info(ctx, "using_dcs_short_write_param: %d\n", ctx->using_dcs_short_write_param);
+}
+
 
 static void exynos_panel_set_dqe_xml(struct device *dev, struct exynos_panel *ctx)
 {
@@ -1679,8 +1707,9 @@ int mcd_drm_mipi_read(void *_ctx, u8 addr, u32 offset, u8 *buf, int size, u32 op
 #define MAX_DSIM_PL_SIZE (DSIM_PL_FIFO_THRESHOLD)
 #define MAX_CMD_SET_SIZE (MAX_PANEL_CMD_QUEUE)
 
-static int mipi_write_table(void *ctx, const struct cmd_set *cmd, int size, u32 option)
+static int mipi_write_table(void *_ctx, const struct cmd_set *cmd, int size, u32 option)
 {
+	struct exynos_panel *ctx = (struct exynos_panel *)_ctx;
 	int ret, total_size = 0;
 	int i, sz_pl = 0;
 #if defined(DSIM_TX_FLOW_CONTROL)
@@ -1748,6 +1777,8 @@ static int mipi_write_table(void *ctx, const struct cmd_set *cmd, int size, u32 
 		} else if (cmd[i].cmd_id == MIPI_DSI_WR_GEN_CMD) {
 			if (cmd[i].size == 1)
 				ret = exynos_drm_cmdset_add(ctx, MIPI_DSI_DCS_SHORT_WRITE, cmd[i].size, cmd[i].buf);
+			else if (ctx->using_dcs_short_write_param && (cmd[i].size == 2) && (cmd[i].buf[0] != 0x35))
+				ret = exynos_drm_cmdset_add(ctx, MIPI_DSI_DCS_SHORT_WRITE_PARAM, cmd[i].size, cmd[i].buf);
 			else
 				ret = exynos_drm_cmdset_add(ctx, MIPI_DSI_DCS_LONG_WRITE, cmd[i].size, cmd[i].buf);
 		} else {
@@ -1979,9 +2010,11 @@ void wq_framedone_handler(struct work_struct *data)
 	struct dsim_device *dsim;
 	struct drm_crtc *crtc;
 	struct exynos_drm_crtc *exynos_crtc;
-	const struct exynos_drm_crtc_ops *crtc_ops;
 	struct drm_crtc_state *crtc_state;
 	int ret = 0;
+	struct decon_device *decon;
+	int fps;
+	u32 framestart_timeout;
 
 	if (!data) {
 		pr_err("%s: invalid work_struct\n", __func__);
@@ -2023,14 +2056,21 @@ void wq_framedone_handler(struct work_struct *data)
 	if (crtc_state->no_vblank)
 		usleep_range(100000, 100100);
 
-	crtc_ops = exynos_crtc->ops;
-	if (!crtc_ops || !crtc_ops->wait_framestart) {
-		pr_err("%s: invalid crtc_ops\n", __func__);
+	decon = exynos_crtc->ctx;
+	if (!decon) {
+		pr_err("%s: invalid decon\n", __func__);
 		ret = -EINVAL;
 		goto dec_exit;
 	}
 
-	crtc_ops->wait_framestart(exynos_crtc);
+	fps = decon->config.fps ?: 60;
+	framestart_timeout = MSEC_PER_SEC * 5 / fps;
+
+	if (!wait_for_completion_timeout(&decon->framestart_done,
+		msecs_to_jiffies(framestart_timeout))) {
+
+		panel_err(decon, "%s: framestart timeout\n", __func__);
+	}
 
 	atomic_inc(&w->count);
 
@@ -2411,27 +2451,35 @@ __visible_for_testing int mcd_drm_set_freq_hop(void *_ctx,
 	}
 
 	dsim = container_of(dsi->host, struct dsim_device, dsi_host);
-	ret = mcd_dsim_update_dsi_freq(dsim, param->dsi_freq);
-	if (ret < 0) {
-		pr_err("%s: failed to update dsi_freq(%d)\n",
-				__func__, param->dsi_freq);
-		return ret;
-	}
+	if (dsi->mode_flags & MIPI_DSI_MODE_VIDEO) {
+		ret = mcd_drm_panel_set_osc(ctx, param->osc_freq);
+		if (ret < 0) {
+			pr_err("%s: failed to set osc(%d)\n",
+					__func__, param->osc_freq);
+			return ret;
+		}
+	} else {	
+		ret = mcd_dsim_update_dsi_freq(dsim, param->dsi_freq);
+		if (ret < 0) {
+			pr_err("%s: failed to update dsi_freq(%d)\n",
+					__func__, param->dsi_freq);
+			return ret;
+		}
 
-	ret = mcd_drm_panel_set_ffc(ctx, param->dsi_freq);
-	if (ret < 0) {
-		pr_err("%s: failed to set ffc(%d)\n",
-				__func__, param->dsi_freq);
-		return ret;
-	}
+		ret = mcd_drm_panel_set_ffc(ctx, param->dsi_freq);
+		if (ret < 0) {
+			pr_err("%s: failed to set ffc(%d)\n",
+					__func__, param->dsi_freq);
+			return ret;
+		}
 
-	ret = mcd_drm_panel_set_osc(ctx, param->osc_freq);
-	if (ret < 0) {
-		pr_err("%s: failed to set osc(%d)\n",
-				__func__, param->osc_freq);
-		return ret;
+		ret = mcd_drm_panel_set_osc(ctx, param->osc_freq);
+		if (ret < 0) {
+			pr_err("%s: failed to set osc(%d)\n",
+					__func__, param->osc_freq);
+			return ret;
+		}
 	}
-
 	return 0;
 }
 #endif
@@ -2841,6 +2889,8 @@ int exynos_panel_probe(struct mipi_dsi_device *dsi)
 	exynos_panel_parse_vendor_pps(dev, ctx);
 
 	exynos_panel_parse_vfp_detail(ctx);
+
+	exynos_panel_parse_using_dcs_short_write_param(ctx);
 
 	base_ctx = ctx;
 

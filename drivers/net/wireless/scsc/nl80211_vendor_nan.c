@@ -826,6 +826,8 @@ int slsi_nan_enable(struct wiphy *wiphy, struct wireless_dev *wdev, const void *
 		SLSI_ERR(sdev, "failed to add nan vif. Cannot start NAN\n");
 	} else {
 		ndev_vif->nan.nan_enable_status = 0;
+		if (slsi_vif_activated(sdev, dev) != 0)
+			SLSI_NET_ERR(dev, "slsi_vif_activated failed\n");
 		ret = slsi_mlme_nan_enable(sdev, dev, &hal_req);
 		if (ret) {
 			SLSI_ERR(sdev, "failed to enable NAN.\n");
@@ -839,8 +841,6 @@ int slsi_nan_enable(struct wiphy *wiphy, struct wireless_dev *wdev, const void *
 			ndev_vif->activated = false;
 			ndev_vif->nan.service_id_map = 0;
 		} else {
-			if (slsi_vif_activated(sdev, dev) != 0)
-				SLSI_NET_ERR(dev, "slsi_vif_activated failed\n");
 			ndev_vif->nan.master_pref_value = hal_req.master_pref;
 			ether_addr_copy(ndev_vif->nan.local_nmi, nan_vif_mac_address);
 			ndev_vif->nan.state = 1;
@@ -1928,7 +1928,6 @@ int slsi_nan_get_capabilities(struct wiphy *wiphy, struct wireless_dev *wdev, co
 						  { SLSI_PSID_UNIFI_NAN_MAX_SERVICE_SPECIFIC_INFO_LENGTH, { 0, 0 } },
 						  { SLSI_PSID_UNIFI_NAN_MAX_NDP_SESSIONS, { 0, 0 } },
 						  { SLSI_PSID_UNIFI_NAN_MAX_APP_INFO_LENGTH, { 0, 0 } },
-						  { SLSI_PSID_UNIFI_NAN_MAX_QUEUED_FOLLOWUPS, { 0, 0 } },
 						  { SLSI_PSID_UNIFI_NAN_MAX_SUBSCRIBE_INTERFACE_ADDRESSES, { 0, 0 } },
 						  { SLSI_PSID_UNIFI_NAN_SUPPORTED_CIPHER_SUITES, { 0, 0 }, },
 						  { SLSI_PSID_UNIFI_NAN_MAX_EXTENDED_SERVICE_SPECIFIC_INFO_LEN, { 0, 0} } };
@@ -1941,7 +1940,6 @@ int slsi_nan_get_capabilities(struct wiphy *wiphy, struct wireless_dev *wdev, co
 					&nan_capabilities.max_service_specific_info_len,
 					&nan_capabilities.max_ndp_sessions,
 					&nan_capabilities.max_app_info_len,
-					&nan_capabilities.max_queued_transmit_followup_msgs,
 					&nan_capabilities.max_subscribe_address,
 					&nan_capabilities.cipher_suites_supported,
 					&nan_capabilities.max_sdea_service_specific_info_len };
@@ -2006,6 +2004,8 @@ int slsi_nan_get_capabilities(struct wiphy *wiphy, struct wireless_dev *wdev, co
 			 SLSI_NAN_MAX_NDP_INSTANCES);
 		nan_capabilities.max_ndp_sessions = SLSI_NAN_MAX_NDP_INSTANCES;
 	}
+	/* Currently Firmware and driver supports only one follow up message per peer at the same time */
+	nan_capabilities.max_queued_transmit_followup_msgs = 1;
 
 	SLSI_INFO(sdev, "transId:%d\n", transaction_id);
 
@@ -2045,7 +2045,7 @@ void slsi_vendor_nan_event_create_delete(struct slsi_dev *sdev, int hal_event, i
 int slsi_nan_data_iface_create(struct wiphy *wiphy, struct wireless_dev *wdev, const void *data, int len)
 {
 	struct slsi_dev *sdev = SDEV_FROM_WIPHY(wiphy);
-	u8 *iface_name = NULL;
+	u8 iface_name[IFNAMSIZ] = {0};
 	int ret = 0, reply_status, type, tmp;
 	struct net_device *dev = slsi_nan_get_netdev(sdev);
 	const struct nlattr *iter;
@@ -2064,12 +2064,13 @@ int slsi_nan_data_iface_create(struct wiphy *wiphy, struct wireless_dev *wdev, c
 			 */
 			if (nla_len(iter) > IFNAMSIZ)
 				return -EINVAL;
-			iface_name = nla_data(iter);
+			memcpy(iface_name, nla_data(iter), nla_len(iter));
+			SLSI_ENSURE_NULL_TERMINATED(iface_name, sizeof(iface_name));
 		} else if (type == NAN_REQ_ATTR_HAL_TRANSACTION_ID)
 			slsi_util_nla_get_u16(iter, &transaction_id);
 	}
 
-	if (!iface_name) {
+	if (!iface_name[0]) {
 		SLSI_ERR(sdev, "No NAN data interface name\n");
 		ret = WIFI_HAL_ERROR_INVALID_ARGS;
 		reply_status = SLSI_HAL_NAN_STATUS_INVALID_PARAM;
@@ -2095,7 +2096,7 @@ exit:
 int slsi_nan_data_iface_create(struct wiphy *wiphy, struct wireless_dev *wdev, const void *data, int len)
 {
 	struct slsi_dev *sdev = SDEV_FROM_WIPHY(wiphy);
-	u8 *iface_name = NULL;
+	u8 iface_name[IFNAMSIZ] = {0};
 	int ret = 0, if_idx, type, tmp, err;
 	struct net_device *dev = slsi_nan_get_netdev(sdev);
 	struct net_device *dev_ndp = NULL;
@@ -2117,11 +2118,12 @@ int slsi_nan_data_iface_create(struct wiphy *wiphy, struct wireless_dev *wdev, c
 			 */
 			if (nla_len(iter) > IFNAMSIZ)
 				return -EINVAL;
-			iface_name = nla_data(iter);
+			memcpy(iface_name, nla_data(iter), nla_len(iter));
+			SLSI_ENSURE_NULL_TERMINATED(iface_name, sizeof(iface_name));
 		} else if (type == NAN_REQ_ATTR_HAL_TRANSACTION_ID)
 			slsi_util_nla_get_u16(iter, &transaction_id);
 	}
-	if (!iface_name) {
+	if (!iface_name[0]) {
 		SLSI_ERR(sdev, "No NAN data interface name\n");
 		ret = WIFI_HAL_ERROR_INVALID_ARGS;
 		reply_status = SLSI_HAL_NAN_STATUS_INVALID_PARAM;
@@ -2180,7 +2182,7 @@ exit:
 int slsi_nan_data_iface_delete(struct wiphy *wiphy, struct wireless_dev *wdev, const void *data, int len)
 {
 	struct slsi_dev *sdev = SDEV_FROM_WIPHY(wiphy);
-	u8 *iface_name = NULL;
+	u8 iface_name[IFNAMSIZ] = {0};
 	int ret = 0, type, tmp;
 	struct net_device *dev = slsi_nan_get_netdev(sdev);
 	u32 reply_status = SLSI_HAL_NAN_STATUS_SUCCESS;
@@ -2199,11 +2201,12 @@ int slsi_nan_data_iface_delete(struct wiphy *wiphy, struct wireless_dev *wdev, c
 			 */
 			if (nla_len(iter) > IFNAMSIZ)
 				return -EINVAL;
-			iface_name = nla_data(iter);
+			memcpy(iface_name, nla_data(iter), nla_len(iter));
+			SLSI_ENSURE_NULL_TERMINATED(iface_name, sizeof(iface_name));
 		} else if (type == NAN_REQ_ATTR_HAL_TRANSACTION_ID)
 			slsi_util_nla_get_u16(iter, &(transaction_id));
 	}
-	if (!iface_name) {
+	if (!iface_name[0]) {
 		SLSI_ERR(sdev, "No NAN data interface name\n");
 		ret = WIFI_HAL_ERROR_INVALID_ARGS;
 		reply_status = SLSI_HAL_NAN_STATUS_INVALID_PARAM;
@@ -2231,7 +2234,7 @@ exit:
 int slsi_nan_data_iface_delete(struct wiphy *wiphy, struct wireless_dev *wdev, const void *data, int len)
 {
 	struct slsi_dev *sdev = SDEV_FROM_WIPHY(wiphy);
-	u8 *iface_name = NULL;
+	u8 iface_name[IFNAMSIZ] = {0};
 	int ret = 0, if_idx, type, tmp;
 	struct net_device *dev = slsi_nan_get_netdev(sdev);
 	struct net_device *dev_ndp = NULL;
@@ -2252,11 +2255,12 @@ int slsi_nan_data_iface_delete(struct wiphy *wiphy, struct wireless_dev *wdev, c
 			 */
 			if (nla_len(iter) > IFNAMSIZ)
 				return -EINVAL;
-			iface_name = nla_data(iter);
+			memcpy(iface_name, nla_data(iter), nla_len(iter));
+			SLSI_ENSURE_NULL_TERMINATED(iface_name, sizeof(iface_name));
 		} else if (type == NAN_REQ_ATTR_HAL_TRANSACTION_ID)
 			slsi_util_nla_get_u16(iter, &(transaction_id));
 	}
-	if (!iface_name) {
+	if (!iface_name[0]) {
 		SLSI_ERR(sdev, "No NAN data interface name\n");
 		ret = WIFI_HAL_ERROR_INVALID_ARGS;
 		reply_status = SLSI_HAL_NAN_STATUS_INVALID_PARAM;
@@ -2955,7 +2959,7 @@ void slsi_nan_send_disabled_event(struct slsi_dev *sdev, struct net_device *dev,
 void slsi_nan_followup_ind(struct slsi_dev *sdev, struct net_device *dev, struct sk_buff *skb)
 {
 	u16 tag_id, tag_len;
-	u8  *ptr = NULL;	
+	u8  *ptr = NULL;
 	struct slsi_hal_nan_followup_ind *hal_evt;
 	struct sk_buff *nl_skb;
 	int res;
@@ -3146,7 +3150,6 @@ void slsi_nan_service_ind(struct slsi_dev *sdev, struct net_device *dev, struct 
 				hal_evt->ranging_event_type = *tag_data_ptr;
 				tag_data_ptr++;
 				break;
-
 			case SLSI_NAN_TLV_TAG_SERVICE_SPECIFIC_INFO:
 				hal_evt->service_specific_info_len = tag_len > SLSI_HAL_NAN_MAX_SERVICE_SPECIFIC_INFO_LEN ?
 							SLSI_HAL_NAN_MAX_SERVICE_SPECIFIC_INFO_LEN : tag_len;
@@ -3193,6 +3196,7 @@ void slsi_nan_service_ind(struct slsi_dev *sdev, struct net_device *dev, struct 
 				SLSI_WARN(sdev, "Skip processing TLV %d\n", tag_id);
 				break;
 			}
+
 			sig_data_len -= tag_len + 4;
 			ptr += tag_len + 4;
 			if (sig_data_len > 4) {
@@ -3551,7 +3555,7 @@ void slsi_nan_ndp_requested_ind(struct slsi_dev *sdev, struct net_device *dev, s
 	SLSI_MUTEX_LOCK(sdev->netdev_add_remove_mutex);
 	SLSI_MUTEX_LOCK(ndev_vif->vif_mutex);
 	sig_data_len = fapi_get_datalen(skb);
-	
+
 	ndev_vif->nan.ndp_start_time = jiffies;
 
 #if (KERNEL_VERSION(4, 1, 0) <= LINUX_VERSION_CODE)

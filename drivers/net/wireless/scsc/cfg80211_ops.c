@@ -2201,7 +2201,6 @@ int slsi_set_pmksa(struct wiphy *wiphy, struct net_device *dev,
 				memset(rsnie, 0, rsnie_len + 2 + PMKID_LEN);
 				/* parse the RSN IE and copy PMKID to Required position in RSN IE*/
 				left = rsnie_len + 2; //FOR RSN IE TAG and Length
-
 				pos = 4; /* RSN IE ID, LEN, and Version*/
 				left -= 4;
 				if (left < 4) {
@@ -2235,7 +2234,7 @@ int slsi_set_pmksa(struct wiphy *wiphy, struct net_device *dev,
 				pos += 2; /* PMKID count */
 				rsnie[pos - 2] = 1;
 				rsnie[pos - 1] = 0;
-				
+
 				memcpy(&rsnie[pos], pmksa->pmkid, PMKID_LEN); /* copy PMKID */
 				pos += PMKID_LEN;
 				if (count && left > 0) {
@@ -3905,7 +3904,8 @@ int slsi_synchronised_response(struct wiphy *wiphy, struct net_device *dev,
 #endif
 	r = slsi_mlme_synchronised_response(sdev, dev, params);
 	SLSI_MUTEX_UNLOCK(ndev_vif->vif_mutex);
-	slsi_wake_unlock(&ndev_vif->wlan_wl_sae);
+	if (slsi_wake_lock_active(&ndev_vif->wlan_wl_sae))
+		slsi_wake_unlock(&ndev_vif->wlan_wl_sae);
 	return r;
 }
 #endif
@@ -4279,12 +4279,10 @@ static struct ieee80211_channel slsi_5ghz_channels[] = {
 	CHAN5G(5785, 157),
 	CHAN5G(5805, 161),
 	CHAN5G(5825, 165),
-#ifdef CONFIG_SCSC_UNII4
 	/* UNII 4 */
 	CHAN5G(5845, 169),
 	CHAN5G(5865, 173),
 	CHAN5G(5885, 177),
-#endif
 };
 
 #ifdef CONFIG_SCSC_WLAN_SUPPORT_6G

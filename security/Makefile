@@ -28,6 +28,9 @@ obj-$(CONFIG_SECURITY_LANDLOCK)		+= landlock/
 # Object integrity file lists
 obj-$(CONFIG_INTEGRITY)			+= integrity/
 
+# KNOX ZT
+obj-$(CONFIG_KZT) += kzt/
+
 # KNOX DAR
 obj-$(CONFIG_DDAR) += ddar/
 obj-$(CONFIG_DDAR) += ddar/built-in.a

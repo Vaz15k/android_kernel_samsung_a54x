@@ -106,7 +106,7 @@ static bool vo_vi_block_ack_disabled;
 module_param(vo_vi_block_ack_disabled, bool, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(vo_vi_block_ack_disabled, "Disable VO VI Block Ack logic added for WMM AC Cert : 5.1.4");
 
-static int max_scan_result_count = 200;
+static int max_scan_result_count = 10000;
 module_param(max_scan_result_count, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(max_scan_result_count, "Max scan results to be reported");
 
@@ -359,6 +359,7 @@ void slsi_add_log_to_system_error_buffer(struct slsi_dev *sdev, char *input_buff
 	sdev->sys_error_log_buf.pos += scnprintf(sdev->sys_error_log_buf.log_buf + pos, buf_size, input_buffer);
 	mutex_unlock(&sdev->sys_error_log_buf.log_buf_mutex);
 }
+
 void slsi_collect_sablelog(struct work_struct *work)
 {
 	SLSI_INFO_NODEV("Sable log triggered because of some reasons.\n");
@@ -415,6 +416,7 @@ struct slsi_dev *slsi_dev_attach(struct device *dev, struct scsc_mx *core, struc
 	SLSI_MUTEX_INIT(sdev->start_stop_mutex);
 	SLSI_MUTEX_INIT(sdev->device_config_mutex);
 	SLSI_MUTEX_INIT(sdev->logger_mutex);
+	SLSI_MUTEX_INIT(sdev->tspec_mutex);
 	slsi_spinlock_create(&sdev->netdev_lock);
 	slsi_spinlock_create(&sdev->wake_stats_lock);
 	sdev->dev = dev;
@@ -631,7 +633,6 @@ struct slsi_dev *slsi_dev_attach(struct device *dev, struct scsc_mx *core, struc
 	INIT_WORK(&sdev->recovery_work_on_start, slsi_chip_recovery);
 	INIT_WORK(&sdev->system_error_user_fail_work, slsi_system_error_recovery);
 	INIT_WORK(&sdev->sablelog_logging_work, slsi_collect_sablelog);
-
 #if defined(SCSC_SEP_VERSION) && SCSC_SEP_VERSION >= 12
 	INIT_WORK(&sdev->chipset_logging_work, slsi_collect_chipset_logs);
 #endif
