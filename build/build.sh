@@ -3,6 +3,7 @@ BUILD_DIR=$(dirname "$(readlink -f "$0")")
 KERNEL_DIR=$(dirname "$BUILD_DIR")
 
 ARGS="$*"
+DATE=$(date +'%Y-%m-%d')
 
 if [ "$GITHUB_ACTIONS" = "true" ]; then
     export KBUILD_BUILD_HOST="GithubActions"
@@ -29,17 +30,17 @@ ksu() {
             fi
         fi
         
-        ZIP_NAME="Squeak_KSU_$(date +'%Y-%m-%d')"
+        ZIP_NAME="Squeak_KSU_${DATE}"
         
         scripts/config --file $KERNEL_DIR/arch/arm64/configs/a54x_defconfig \
             -e CONFIG_KSU \
-            --set-str CONFIG_LOCALVERSION "-squeak_ksu"
+            --set-str CONFIG_LOCALVERSION "-squeak-ksu-${DATE}"
         
         if [[ "$ARGS" == *"--sus"* ]]; then
             ZIP_NAME="Squeak_KSU_SUS_$(date +'%Y-%m-%d')"
             scripts/config --file $KERNEL_DIR/arch/arm64/configs/a54x_defconfig \
                 -e CONFIG_KSU_SUSFS \
-                --set-str CONFIG_LOCALVERSION "-squeak_ksu_sus"
+                --set-str CONFIG_LOCALVERSION "-squeak-ksu-sus-${DATE}"
         fi
         
         echo "INFO: Building KSU kernel"
@@ -47,24 +48,41 @@ ksu() {
     elif [[ "$ARGS" == *"--next"* ]]; then
         if [ ! -d "$KERNEL_DIR/KernelSU-Next" ]; then
             echo "INFO: Cloning KernelSU Next"
-            curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next-susfs/kernel/setup.sh" | bash -s next-susfs-dev
+            curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next-susfs/kernel/setup.sh" | bash -s next-susfs
         fi
         
-        ZIP_NAME="Squeak_KSU_NEXT_$(date +'%Y-%m-%d')"
+        ZIP_NAME="Squeak_KSU_NEXT_${DATE}"
         
         scripts/config --file $KERNEL_DIR/arch/arm64/configs/a54x_defconfig \
             -e CONFIG_KSU \
             -e CONFIG_KSU_SUSFS \
-            --set-str CONFIG_LOCALVERSION "-squeak-ksun"
+            --set-str CONFIG_LOCALVERSION "-squeak-ksun-${DATE}"
         
         echo "INFO: Building KSU Next"
+    
+    elif [[ "$ARGS" == *"--sukisu"* ]]; then
+        if [ ! -d "$KERNEL_DIR/KernelSU" ]; then
+                echo "INFO: Cloning KernelSU Next"
+                curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-dev
+        fi
+        ZIP_NAME="Squeak_SukiSU_${DATE}"
+        
+        scripts/config --file $KERNEL_DIR/arch/arm64/configs/a54x_defconfig \
+            -e CONFIG_KSU \
+            -e CONFIG_KSU_SUSFS \
+            -e CONFIG_KPM \
+            --set-str CONFIG_LOCALVERSION "-squeak-sukisu-${DATE}"
+        
+        echo "INFO: Building SukiSU kernel"
     
     else
         if [ -d "$KERNEL_DIR/KernelSU" ] || [ -d "$KERNEL_DIR/KernelSU-Next" ]; then
             rm -rf "$KERNEL_DIR/KernelSU" "$KERNEL_DIR/KernelSU-Next" "$KERNEL_DIR/drivers/kernelsu"
             git reset HEAD --hard
         fi
-        ZIP_NAME="Squeak_$(date +'%Y-%m-%d')"
+        ZIP_NAME="Squeak_${DATE}"
+        scripts/config --file $KERNEL_DIR/arch/arm64/configs/a54x_defconfig \
+            --set-str CONFIG_LOCALVERSION "-squeak-${DATE}"
         
         permissive
     fi
@@ -72,7 +90,7 @@ ksu() {
 
 permissive() {
     if [[ "$ARGS" == *"--permissive"* ]]; then
-        ZIP_NAME="Squeak_PERMISSIVE_$(date +'%Y-%m-%d')"
+        ZIP_NAME="Squeak_PERMISSIVE_${DATE}"
         
         scripts/config --file $KERNEL_DIR/arch/arm64/configs/a54x_defconfig \
             -e CONFIG_PERMISSIVE_SELINUX \
@@ -84,7 +102,7 @@ permissive() {
             -d CONFIG_INTEGRITY_ASYMMETRIC_KEYS \
             -d CONFIG_INTEGRITY_TRUSTED_KEYRING \
             -d CONFIG_INTEGRITY_AUDIT \
-            --set-str CONFIG_LOCALVERSION "-squeak_permissive"
+            --set-str CONFIG_LOCALVERSION "-squeak_permissive-${DATE}"
         
         echo "Building permissive kernel"
     fi
