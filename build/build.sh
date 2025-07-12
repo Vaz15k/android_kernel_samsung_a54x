@@ -24,7 +24,7 @@ ksu() {
         if [ ! -d "$KERNEL_DIR/KernelSU" ]; then
             echo "INFO: Cloning KernelSU"
             if [[ "$ARGS" == *"--sus"* ]]; then
-                curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s susfs-v1.5.7
+                curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s susfs-main
             else
                 curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
             fi
@@ -48,7 +48,7 @@ ksu() {
     elif [[ "$ARGS" == *"--next"* ]]; then
         if [ ! -d "$KERNEL_DIR/KernelSU-Next" ]; then
             echo "INFO: Cloning KernelSU Next"
-            curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next-susfs/kernel/setup.sh" | bash -s next-susfs
+            curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next-susfs/kernel/setup.sh" | bash -s next
         fi
         
         ZIP_NAME="Squeak_KSU_NEXT_${DATE}"
@@ -63,7 +63,7 @@ ksu() {
     elif [[ "$ARGS" == *"--sukisu"* ]]; then
         if [ ! -d "$KERNEL_DIR/KernelSU" ]; then
                 echo "INFO: Cloning KernelSU Next"
-                curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-dev
+                curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
         fi
         ZIP_NAME="Squeak_SukiSU_${DATE}"
         
