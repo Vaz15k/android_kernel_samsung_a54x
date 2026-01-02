@@ -83,9 +83,15 @@ int sensor_imx766_cis_QuadSensCal_write(struct v4l2_subdev *subdev)
 
 	int position;
 	ulong cal_addr;
-	u8 cal_data[IMX766_QSC_SIZE] = {0, };
+	u8 *cal_data = NULL;
 	char *rom_cal_buf = NULL;
 	ktime_t st = ktime_get();
+
+	cal_data = kmalloc(IMX766_QSC_SIZE, GFP_KERNEL);
+	if (!cal_data) {
+		err("cis_imx766 failed to allocate cal_data\n");
+		return -ENOMEM;
+	}
 
 	sensor_peri = container_of(cis, struct is_device_sensor_peri, cis);
 	WARN_ON(!sensor_peri);
@@ -116,6 +122,7 @@ int sensor_imx766_cis_QuadSensCal_write(struct v4l2_subdev *subdev)
 		dbg_sensor(1, "[%s] time %ldus", __func__, PABLO_KTIME_US_DELTA_NOW(st));
 
 p_err:
+	kfree(cal_data);
 	return ret;
 }
 #endif
