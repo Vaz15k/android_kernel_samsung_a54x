@@ -6654,7 +6654,7 @@ int slsi_read_regulatory_rules(struct slsi_dev *sdev, struct slsi_802_11d_reg_do
 
 	for (i = 0; i < sdev->regdb.country[country_index].collection->reg_rule_num; i++) {
 		if (sdev->regdb.country[country_index].collection->reg_rule[i]->flags & SLSI_REGULATORY_DUP_RULE)
-			break;
+			continue;
 		reg_rule = &domain_info->regdomain->reg_rules[num_rules++];
 
 		/* start freq 2 bytes */

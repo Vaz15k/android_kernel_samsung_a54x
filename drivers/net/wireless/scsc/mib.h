@@ -12542,6 +12542,9 @@ void slsi_mib_buf_append(struct slsi_mib_data *dst, size_t bufferLength, u8 *buf
 #define SLSI_PSID_UNIFI_QSFS_VERION             2391
 #define SLSI_PSID_UNIFI_APPENDIX_VERSIONS       2881
 
+/* TODO: To be removed after mib update */
+#define SLSI_PSID_UNIFI_ROAM_DOWNGRADE_AKM_ALLOWED 0x2757
+
 #ifdef __cplusplus
 }
 #endif

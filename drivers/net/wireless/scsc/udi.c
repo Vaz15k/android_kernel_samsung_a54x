@@ -699,7 +699,12 @@ static long slsi_cdev_ioctl(struct file *filp, unsigned int cmd, unsigned long a
 		break;
 	}
 	case UNIFI_SET_UDI_LOG_MASK:
-		r = slsi_unifi_set_log_mask(client, sdev, arg);
+		if (client->log_enabled) {
+			r = slsi_unifi_set_log_mask(client, sdev, arg);
+		} else {
+			SLSI_ERR(sdev, "UNIFI_SET_UDI_LOG_MASK: UDI is not enabled\n");
+			r = -EINVAL;
+		}
 		break;
 
 	case UNIFI_SET_MIB:

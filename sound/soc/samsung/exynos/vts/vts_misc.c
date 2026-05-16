@@ -60,6 +60,8 @@ static long vts_fio_common_ioctl(struct file *file,
 			return -EINVAL;
 		if (sm_info.actual_sz > VTS_MODEL_BIN_MAXSZ)
 			return -EINVAL;
+		if (sm_info.offset < 0 || (sm_info.offset + sm_info.actual_sz) > VTS_SRAM_SZ)
+			return -EINVAL;
 		memcpy(data->sm_data, data->dmab_model.area, sm_info.actual_sz);
 		data->sm_loaded = true;
 		data->sm_info.actual_sz = sm_info.actual_sz;
