@@ -21,12 +21,46 @@ dtbo-y += \
 	a54x_jpn_kdi_w00_r04.dtbo \
 	a54x_jpn_kdi_w00_r05.dtbo
 
+# A546J - Japan DCM
+dtbo-y += \
+	a54x_jpn_dcm_w00_r00.dtbo \
+	a54x_jpn_dcm_w00_r04.dtbo \
+	a54x_jpn_dcm_w00_r05.dtbo
+
 # A546S - Korea
 dtbo-y += \
 	a54x_kor_skt_w00_r00.dtbo \
 	a54x_kor_skt_w00_r02.dtbo \
 	a54x_kor_skt_w00_r03.dtbo \
 	a54x_kor_skt_w00_r05.dtbo
+
+# A546W - Canada
+dtbo-y += \
+	a54x_can_single_w00_r00.dtbo \
+	a54x_can_single_w00_r02.dtbo \
+	a54x_can_single_w00_r03.dtbo \
+	a54x_can_single_w00_r05.dtbo
+
+# A546U - USA
+dtbo-y += \
+	a54x_usa_open_w00_r00.dtbo \
+	a54x_usa_open_w00_r02.dtbo \
+	a54x_usa_open_w00_r03.dtbo \
+	a54x_usa_open_w00_r05.dtbo
+
+# A546U1 - USA
+dtbo-y += \
+	a54x_usa_singlew_w00_r00.dtbo \
+	a54x_usa_singlew_w00_r02.dtbo \
+	a54x_usa_singlew_w00_r03.dtbo \
+	a54x_usa_singlew_w00_r05.dtbo
+
+# A546V - USA
+dtbo-y += \
+	a54x_usa_singlex_w00_r00.dtbo \
+	a54x_usa_singlex_w00_r02.dtbo \
+	a54x_usa_singlex_w00_r03.dtbo \
+	a54x_usa_singlex_w00_r05.dtbo
 
 # A5460 - CHN HK
 dtbo-y += \
